@@ -38,7 +38,7 @@ class KGX(commands.Bot):
     async def on_ready(self):
         color = [0x126132, 0x82fc74, 0xfea283, 0x009497, 0x08fad4, 0x6ed843, 0x8005c0]
         await self.get_channel(722092542249795679).send(
-            embed=discord.Embed(description="起動しました。from: iroha's heroku", color=random.choice(color)))
+            embed=discord.Embed(description="起動しました。from: conarin's vps", color=random.choice(color)))
         print("ready")
 
         # コマンドのグローバルチェックを付ける
