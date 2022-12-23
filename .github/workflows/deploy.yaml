@@ -1,0 +1,33 @@
+on:
+  push:
+    branches:
+      - 'main'
+name: Deploy
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Cloudflared
+        run: |
+          cd "$GITHUB_ACTION_PATH"
+          curl --location --silent --show-error --output cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x cloudflared
+      
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          name: id_rsa
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+          config: |
+            Host target
+              User ${{ secrets.SSH_USER }}
+              HostName ${{ secrets.SSH_HOST_NAME }}
+              Port ${{ secrets.SSH_PORT }}
+              IdentityFile ~/.ssh/id_rsa
+              ProxyCommand ./cloudflared access ssh --hostname %h --log-level warn --id ${{ secrets.CF_ACCESS_CLIENT_ID }} --secret ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+      
+      - name: Deploy Over SSH
+        env:
+          USER: ${{ secrets.SSH_USER }}
+        run: ssh target "bash /home/$USER/deploy.sh"
