@@ -419,7 +419,7 @@ class AuctionDael(commands.Cog):
                         owner = kgx.get_member(owner_id)
 
                         # 終了時刻までの残り時間を計算
-                        end_time_datetime = datetime.datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
+                        end_time_datetime = datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
                         end_time_unix = int(end_time_datetime.timestamp())
 
                         auction_info.append(f"{channel.mention}:")
@@ -730,7 +730,7 @@ class AuctionDael(commands.Cog):
                         owner = kgx.get_member(owner_id)
 
                         # 終了時刻までの残り時間を計算
-                        end_time_datetime = datetime.datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
+                        end_time_datetime = datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
                         end_time_unix = int(end_time_datetime.timestamp())
 
                         deal_info.append(f"{channel.mention}:")
@@ -931,7 +931,7 @@ class AuctionDael(commands.Cog):
                                 owner = kgx.get_member(owner_id)
 
                                 # 終了時刻までの残り時間を計算
-                                end_time_datetime = datetime.datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
+                                end_time_datetime = datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
                                 end_time_unix = int(end_time_datetime.timestamp())
 
                                 auction_info.append(f"{channel.mention}:")
@@ -1219,7 +1219,7 @@ class AuctionDael(commands.Cog):
                     owner = kgx.get_member(owner_id)
 
                     # 終了時刻までの残り時間を計算
-                    end_time_datetime = datetime.datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
+                    end_time_datetime = datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
                     end_time_unix = int(end_time_datetime.timestamp())
 
                     auction_info.append(f"{channel.mention}:")
