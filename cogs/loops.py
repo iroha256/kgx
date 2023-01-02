@@ -16,8 +16,8 @@ class Loops(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.presence_change_task.start()
-        self.show_all_auction_channel_info.start()
-        self.show_all_deal_channel_info.start()
+        #self.show_all_auction_channel_info.start()
+        #self.show_all_deal_channel_info.start()
 
     @tasks.loop(seconds=20)
     async def presence_change_task(self):

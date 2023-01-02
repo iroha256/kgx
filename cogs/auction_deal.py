@@ -2,6 +2,7 @@ import asyncio
 import io
 import os
 import re
+import traceback
 from datetime import datetime, timedelta
 
 import discord
@@ -364,6 +365,100 @@ class AuctionDael(commands.Cog):
                 db.commit()
 
                 try:
+                    kgx = self.bot.get_guild(558125111081697300)
+                    auction_data_channel = self.bot.get_channel(id=771034285352026162)
+                    await auction_data_channel.purge(limit=100)
+                    cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
+                                "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
+                                "(auction JOIN tend ON auction.ch_id = tend.ch_id)")
+                    sql_data = cur.fetchall()
+
+                    def active_filter(record):
+                        """
+                        開催していないオークションならFalse。ついでにdebugも消す
+                        """
+                        ch_id, owner_id = record[:2]
+                        if ch_id == 747728655735586876:
+                            return False # 椎名debug
+                        elif owner_id == 0:
+                            return False # 開催していない
+                        else:
+                            return True
+
+                    AUCTION_TYPES = ["椎名", "ガチャ券", "all", "闇取引"] # オークションの種類一覧
+                    def order_func(record):
+                        """
+                        チャンネル名に対応したタプルを返す
+                        椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
+                        """
+                        ch_id = record[0]
+                        channel_name = self.bot.get_channel(id=ch_id).name
+
+                        for type_order, type_name in enumerate(AUCTION_TYPES):
+                            if type_name in channel_name: 
+                                # 該当すればtype_orderを確定させる
+                                break
+                        else:
+                            type_order = len(AUCTION_TYPES) # いずれにも該当しなければ他よりも大きい値にする
+                        
+                        ch_num = int(re.search(r"\d+", channel_name).group())
+                        return (type_order, ch_num) # type_order,ch_numの順に比較される
+                    
+                    auctions = list(filter(active_filter, sql_data))
+                    auctions.sort(key=order_func)
+
+                    if not auctions: #returnされると☆が付かなくなるがたぶんこれが発火することはないので無視する
+                        embed = discord.Embed(description="オークションはまだ一つも行われていません！", color=0x59a5e3)
+                        await auction_data_channel.send(embed=embed)
+                        return
+
+                    auction_info_list = []
+                    for ch_id, owner_id, auction_item, tender_id, unit, tend_price, end_time in auctions:
+                        auction_info = []
+                        channel = self.bot.get_channel(ch_id)
+                        owner = kgx.get_member(owner_id)
+
+                        # 終了時刻までの残り時間を計算
+                        end_time_datetime = datetime.datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
+                        end_time_unix = int(end_time_datetime.timestamp())
+
+                        auction_info.append(f"{channel.mention}:")
+                        try:
+                            auction_info.append(f"出品者 → {owner.display_name}")
+                        except AttributeError:
+                            auction_info.append(f"出品者 → サーバを抜けました")
+                        auction_info.append(f"商品名 → {auction_item}")
+                        # 多分no bidで更新すると死ぬ気がするので分岐
+                        if tender_id[-1] == 0:
+                            auction_info.append("入札者はまだいません！")
+                        else:
+                            highest_tender = kgx.get_member(tender_id[-1])
+                            try:
+                                auction_info.append(f"最高額入札者 → {highest_tender.display_name}")
+                            except AttributeError:
+                                auction_info.append(f"最高額入札者 → サーバを抜けました")
+                            auction_info.append(f"入札額 → {unit}{self.bot.stack_check_reverse(tend_price[-1])}")
+
+                        auction_info.append(f"終了 → <t:{end_time_unix}:R>")
+
+                        auction_info_list.append("\n".join(auction_info))
+
+                    for description in self.bot.join_within_limit(auction_info_list, sep="\n\n--------\n\n"):
+                        embed = discord.Embed(description=description, color=0x59a5e3)
+                        await auction_data_channel.send(embed=embed)
+
+                except Exception as e:
+                    orig_error = getattr(e, "original", e)
+                    error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
+                    error_message = f'```{error_msg}```'
+                    ch = self.bot.get_channel(628807266753183754)
+                    d = datetime.datetime.now()  # 現在時刻の取得
+                    time = d.strftime("%Y/%m/%d %H:%M:%S")
+                    embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
+                    embed.set_footer(text=f'channel:on_check_time_loop\ntime:{time}\nuser:None')
+                    await ch.send(embed=embed)
+
+                try:
                     await asyncio.wait_for(ctx.channel.edit(name=ctx.channel.name.split('☆')[0]), timeout=3.0)
                 except asyncio.TimeoutError:
                     pass
@@ -583,6 +678,90 @@ class AuctionDael(commands.Cog):
                 db.commit()
 
                 try:
+                    kgx = self.bot.get_guild(558125111081697300)
+                    deal_data_channel = self.bot.get_channel(id=771068489627861002)
+                    await deal_data_channel.purge(limit=100)
+                    cur.execute("SELECT ch_id, deal_owner_id, deal_item, deal_hope_price, deal_end_time, unit from deal")
+                    sql_data = cur.fetchall()
+
+                    def active_filter(record):
+                        """
+                        開催していない取引ならFalse。ついでにdebugも消す
+                        """
+                        ch_id, owner_id = record[:2]
+                        if ch_id == 858158727576027146:
+                            return False # 取引debug
+                        elif owner_id == 0:
+                            return False # 開催していない
+                        else:
+                            return True
+
+                    DEAL_TYPES = ["椎名", "ガチャ券", "all"] # 取引の種類一覧
+                    def order_func(record):
+                        """
+                        チャンネル名に対応したタプルを返す
+                        椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
+                        """
+                        ch_id = record[0]
+                        channel_name = self.bot.get_channel(id=ch_id).name
+
+                        for type_order, type_name in enumerate(DEAL_TYPES):
+                            if type_name in channel_name: 
+                                # 該当すればtype_orderを確定させる
+                                break
+                        else:
+                            type_order = len(DEAL_TYPES) # いずれにも該当しなければ他よりも大きい値にする
+                        
+                        ch_num = int(re.search(r"\d+", channel_name).group())
+                        return (type_order, ch_num) # type_order,ch_numの順に比較される
+                    
+                    deals = list(filter(active_filter, sql_data))
+                    deals.sort(key=order_func)
+
+                    if not deals: #returnされると☆が付かなくなるがたぶんこれが発火することはないので無視する
+                        embed = discord.Embed(description="取引はまだ一つも行われていません！", color=0x59a5e3)
+                        await deal_data_channel.send(embed=embed)
+                        return
+
+                    deal_info_list = []
+                    for ch_id, owner_id, deal_item, hope_price, end_time, unit in deals:
+                        deal_info = []
+                        channel = self.bot.get_channel(ch_id)
+                        owner = kgx.get_member(owner_id)
+
+                        # 終了時刻までの残り時間を計算
+                        end_time_datetime = datetime.datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
+                        end_time_unix = int(end_time_datetime.timestamp())
+
+                        deal_info.append(f"{channel.mention}:")
+                        try:
+                            deal_info.append(f"出品者 → {owner.display_name}")
+                        except AttributeError:
+                            deal_info.append(f"出品者 → サーバを抜けました")
+                        deal_info.append(f"商品名 → {deal_item}")
+                        deal_info.append(f"希望価格 → {unit}{self.bot.stack_check_reverse(int(hope_price))}")
+
+                        deal_info.append(f"終了 → <t:{end_time_unix}:R>")
+
+                        deal_info_list.append("\n".join(deal_info))
+
+
+                    for description in self.bot.join_within_limit(deal_info_list, sep="\n\n--------\n\n"):
+                        embed = discord.Embed(description=description, color=0x59a5e3)
+                        await deal_data_channel.send(embed=embed)
+                
+                except Exception as e:
+                    orig_error = getattr(e, "original", e)
+                    error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
+                    error_message = f'```{error_msg}```'
+                    ch = self.bot.get_channel(628807266753183754)
+                    d = datetime.datetime.now()  # 現在時刻の取得
+                    time = d.strftime("%Y/%m/%d %H:%M:%S")
+                    embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
+                    embed.set_footer(text=f'channel:on_check_time_loop\ntime:{time}\nuser:None')
+                    await ch.send(embed=embed)
+
+                try:
                     await asyncio.wait_for(ctx.channel.edit(name=ctx.channel.name.split('☆')[0]), timeout=3.0)
                 except asyncio.TimeoutError:
                     pass
@@ -696,6 +875,101 @@ class AuctionDael(commands.Cog):
                         await asyncio.wait_for(ctx.channel.edit(name=f"{ctx.channel.name}☆"), timeout=3.0)
                     except asyncio.TimeoutError:
                         pass
+
+                    try:
+                        kgx = self.bot.get_guild(558125111081697300)
+                        auction_data_channel = self.bot.get_channel(id=771034285352026162)
+                        await auction_data_channel.purge(limit=100)
+                        cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
+                                    "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
+                                    "(auction JOIN tend ON auction.ch_id = tend.ch_id)")
+                        sql_data = cur.fetchall()
+
+                        def active_filter(record):
+                            """
+                            開催していないオークションならFalse。ついでにdebugも消す
+                            """
+                            ch_id, owner_id = record[:2]
+                            if ch_id == 747728655735586876:
+                                return False # 椎名debug
+                            elif owner_id == 0:
+                                return False # 開催していない
+                            else:
+                                return True
+
+                        AUCTION_TYPES = ["椎名", "ガチャ券", "all", "闇取引"] # オークションの種類一覧
+                        def order_func(record):
+                            """
+                            チャンネル名に対応したタプルを返す
+                            椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
+                            """
+                            ch_id = record[0]
+                            channel_name = self.bot.get_channel(id=ch_id).name
+
+                            for type_order, type_name in enumerate(AUCTION_TYPES):
+                                if type_name in channel_name: 
+                                    # 該当すればtype_orderを確定させる
+                                    break
+                            else:
+                                type_order = len(AUCTION_TYPES) # いずれにも該当しなければ他よりも大きい値にする
+                            
+                            ch_num = int(re.search(r"\d+", channel_name).group())
+                            return (type_order, ch_num) # type_order,ch_numの順に比較される
+                        
+                        auctions = list(filter(active_filter, sql_data))
+                        auctions.sort(key=order_func)
+
+                        if not auctions:
+                            embed = discord.Embed(description="オークションはまだ一つも行われていません！", color=0x59a5e3)
+                            await auction_data_channel.send(embed=embed)
+
+                        else:
+                            auction_info_list = []
+                            for ch_id, owner_id, auction_item, tender_id, unit, tend_price, end_time in auctions:
+                                auction_info = []
+                                channel = self.bot.get_channel(ch_id)
+                                owner = kgx.get_member(owner_id)
+
+                                # 終了時刻までの残り時間を計算
+                                end_time_datetime = datetime.datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
+                                end_time_unix = int(end_time_datetime.timestamp())
+
+                                auction_info.append(f"{channel.mention}:")
+                                try:
+                                    auction_info.append(f"出品者 → {owner.display_name}")
+                                except AttributeError:
+                                    auction_info.append(f"出品者 → サーバを抜けました")
+                                auction_info.append(f"商品名 → {auction_item}")
+                                # 多分no bidで更新すると死ぬ気がするので分岐
+                                if tender_id[-1] == 0:
+                                    auction_info.append("入札者はまだいません！")
+                                else:
+                                    highest_tender = kgx.get_member(tender_id[-1])
+                                    try:
+                                        auction_info.append(f"最高額入札者 → {highest_tender.display_name}")
+                                    except AttributeError:
+                                        auction_info.append(f"最高額入札者 → サーバを抜けました")
+                                    auction_info.append(f"入札額 → {unit}{self.bot.stack_check_reverse(tend_price[-1])}")
+
+                                auction_info.append(f"終了 → <t:{end_time_unix}:R>")
+
+                                auction_info_list.append("\n".join(auction_info))
+
+                            for description in self.bot.join_within_limit(auction_info_list, sep="\n\n--------\n\n"):
+                                embed = discord.Embed(description=description, color=0x59a5e3)
+                                await auction_data_channel.send(embed=embed)
+
+                    except Exception as e:
+                        orig_error = getattr(e, "original", e)
+                        error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
+                        error_message = f'```{error_msg}```'
+                        ch = self.bot.get_channel(628807266753183754)
+                        d = datetime.datetime.now()  # 現在時刻の取得
+                        time = d.strftime("%Y/%m/%d %H:%M:%S")
+                        embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
+                        embed.set_footer(text=f'channel:on_check_time_loop\ntime:{time}\nuser:None')
+                        await ch.send(embed=embed)
+
                     return
 
             elif price == 0 or price is None:
@@ -841,54 +1115,148 @@ class AuctionDael(commands.Cog):
                 embed = discord.Embed(description="このコマンドはオークション主催者のみ使用可能です。", color=0x4259fb)
                 await ctx.send(embed=embed)
                 return
-            else:
-                cur.execute("select tender_id, tend_price from tend where ch_id = %s", (ctx.channel.id,))
-                tenders_id, tend_prices = cur.fetchone()
 
-                if tenders_id[-1] == 0:
-                    await ctx.send("入札がありません")
+            cur.execute("select tender_id, tend_price from tend where ch_id = %s", (ctx.channel.id,))
+            tenders_id, tend_prices = cur.fetchone()
+
+            if tenders_id[-1] == 0:
+                await ctx.send("入札がありません")
+                return
+
+            tenders_id.pop()
+            tend_prices.pop()
+
+            cur.execute(
+                "UPDATE tend SET tender_id = %s, tend_price = %s WHERE ch_id = %s",
+                (tenders_id, tend_prices, ctx.channel.id))
+            db.commit()
+
+            last_tender_id = tenders_id[-1]
+
+            if last_tender_id == 0:
+                embed = discord.Embed(
+                    description="最初の入札が取り消されたため、現在入札はありません。",
+                    color=0x4259fb
+                )
+                image = None
+            else:
+                # 退出したユーザーのときはNoneになり、getattrの第三引数がlast_tender_nameになる
+                last_tender_name = getattr(self.bot.get_user(last_tender_id), "display_name", "退出したユーザー")
+                embed = discord.Embed(
+                    description=f"入札者: **{last_tender_name}**, \n"
+                                f"入札額: **{unit}{self.bot.stack_check_reverse(tend_prices[-1])}**\n",
+                    color=0x4259fb
+                )
+            
+                cur.execute(f"SELECT uuid FROM user_data where user_id = %s", (last_tender_id,))
+                uuid_list, = cur.fetchone()
+                player_head_avatarurl = f"https://cravatar.eu/helmhead/{uuid_list[0]}"  # uuidのカラムがなーぜかlistで保管されているため[0]で取り出し
+                image = requests.get(player_head_avatarurl)
+                image = io.BytesIO(image.content)
+                image.seek(0)
+                image = Image.open(image)
+                image = image.resize((100, 100))
+                image.save("./icon.png")
+                image = discord.File("./icon.png", filename="icon.png")
+                embed.set_image(url="attachment://icon.png")
+            
+            time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+            embed.set_footer(text=f"入札時刻: {time}")
+            await ctx.channel.send(file=image, embed=embed)
+
+            try:
+                kgx = self.bot.get_guild(558125111081697300)
+                auction_data_channel = self.bot.get_channel(id=771034285352026162)
+                await auction_data_channel.purge(limit=100)
+                cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
+                            "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
+                            "(auction JOIN tend ON auction.ch_id = tend.ch_id)")
+                sql_data = cur.fetchall()
+
+                def active_filter(record):
+                    """
+                    開催していないオークションならFalse。ついでにdebugも消す
+                    """
+                    ch_id, owner_id = record[:2]
+                    if ch_id == 747728655735586876:
+                        return False # 椎名debug
+                    elif owner_id == 0:
+                        return False # 開催していない
+                    else:
+                        return True
+
+                AUCTION_TYPES = ["椎名", "ガチャ券", "all", "闇取引"] # オークションの種類一覧
+                def order_func(record):
+                    """
+                    チャンネル名に対応したタプルを返す
+                    椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
+                    """
+                    ch_id = record[0]
+                    channel_name = self.bot.get_channel(id=ch_id).name
+
+                    for type_order, type_name in enumerate(AUCTION_TYPES):
+                        if type_name in channel_name: 
+                            # 該当すればtype_orderを確定させる
+                            break
+                    else:
+                        type_order = len(AUCTION_TYPES) # いずれにも該当しなければ他よりも大きい値にする
+                    
+                    ch_num = int(re.search(r"\d+", channel_name).group())
+                    return (type_order, ch_num) # type_order,ch_numの順に比較される
+                
+                auctions = list(filter(active_filter, sql_data))
+                auctions.sort(key=order_func)
+
+                if not auctions: #returnされると☆が付かなくなるがたぶんこれが発火することはないので無視する
+                    embed = discord.Embed(description="オークションはまだ一つも行われていません！", color=0x59a5e3)
+                    await auction_data_channel.send(embed=embed)
                     return
 
-                tenders_id.pop()
-                tend_prices.pop()
+                auction_info_list = []
+                for ch_id, owner_id, auction_item, tender_id, unit, tend_price, end_time in auctions:
+                    auction_info = []
+                    channel = self.bot.get_channel(ch_id)
+                    owner = kgx.get_member(owner_id)
 
-                cur.execute(
-                    "UPDATE tend SET tender_id = %s, tend_price = %s WHERE ch_id = %s",
-                    (tenders_id, tend_prices, ctx.channel.id))
-                db.commit()
+                    # 終了時刻までの残り時間を計算
+                    end_time_datetime = datetime.datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
+                    end_time_unix = int(end_time_datetime.timestamp())
 
-                last_tender_id = tenders_id[-1]
+                    auction_info.append(f"{channel.mention}:")
+                    try:
+                        auction_info.append(f"出品者 → {owner.display_name}")
+                    except AttributeError:
+                        auction_info.append(f"出品者 → サーバを抜けました")
+                    auction_info.append(f"商品名 → {auction_item}")
+                    # 多分no bidで更新すると死ぬ気がするので分岐
+                    if tender_id[-1] == 0:
+                        auction_info.append("入札者はまだいません！")
+                    else:
+                        highest_tender = kgx.get_member(tender_id[-1])
+                        try:
+                            auction_info.append(f"最高額入札者 → {highest_tender.display_name}")
+                        except AttributeError:
+                            auction_info.append(f"最高額入札者 → サーバを抜けました")
+                        auction_info.append(f"入札額 → {unit}{self.bot.stack_check_reverse(tend_price[-1])}")
 
-                if last_tender_id == 0:
-                    embed = discord.Embed(
-                        description="最初の入札が取り消されたため、現在入札はありません。",
-                        color=0x4259fb
-                    )
-                    image = None
-                else:
-                    # 退出したユーザーのときはNoneになり、getattrの第三引数がlast_tender_nameになる
-                    last_tender_name = getattr(self.bot.get_user(last_tender_id), "display_name", "退出したユーザー")
-                    embed = discord.Embed(
-                        description=f"入札者: **{last_tender_name}**, \n"
-                                    f"入札額: **{unit}{self.bot.stack_check_reverse(tend_prices[-1])}**\n",
-                        color=0x4259fb
-                    )
-                
-                    cur.execute(f"SELECT uuid FROM user_data where user_id = %s", (last_tender_id,))
-                    uuid_list, = cur.fetchone()
-                    player_head_avatarurl = f"https://cravatar.eu/helmhead/{uuid_list[0]}"  # uuidのカラムがなーぜかlistで保管されているため[0]で取り出し
-                    image = requests.get(player_head_avatarurl)
-                    image = io.BytesIO(image.content)
-                    image.seek(0)
-                    image = Image.open(image)
-                    image = image.resize((100, 100))
-                    image.save("./icon.png")
-                    image = discord.File("./icon.png", filename="icon.png")
-                    embed.set_image(url="attachment://icon.png")
-                
-                time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-                embed.set_footer(text=f"入札時刻: {time}")
-                await ctx.channel.send(file=image, embed=embed)
+                    auction_info.append(f"終了 → <t:{end_time_unix}:R>")
+
+                    auction_info_list.append("\n".join(auction_info))
+
+                for description in self.bot.join_within_limit(auction_info_list, sep="\n\n--------\n\n"):
+                    embed = discord.Embed(description=description, color=0x59a5e3)
+                    await auction_data_channel.send(embed=embed)
+
+            except Exception as e:
+                orig_error = getattr(e, "original", e)
+                error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
+                error_message = f'```{error_msg}```'
+                ch = self.bot.get_channel(628807266753183754)
+                d = datetime.datetime.now()  # 現在時刻の取得
+                time = d.strftime("%Y/%m/%d %H:%M:%S")
+                embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
+                embed.set_footer(text=f'channel:on_check_time_loop\ntime:{time}\nuser:None')
+                await ch.send(embed=embed)
 
         else:
             embed = discord.Embed(description="このコマンドはオークションでのみ使用可能です。", color=0x4259fb)
