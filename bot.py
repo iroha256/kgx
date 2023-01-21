@@ -194,19 +194,24 @@ class KGX(commands.Bot):
         ch = self.get_channel(628807266753183754)
         await ch.send(f"{now}")
 
+#        after = bidscore_roles[now]
+#        if after is not None and after not in member.roles:
+#            await member.add_roles(after)
+
         after = bidscore_roles[now]
-        if after is not None and after not in member.roles:
-            await member.add_roles(after)
 
         before = None
-#        for role in bidscore_roles[1:]:
-        for role in bidscore_roles:
+        for role in bidscore_roles[1:]:
+        #for role in bidscore_roles:
             if role in member.roles:
                 # 付いていた役職を取得
                 before = role
-                if role != after:
-                    # 該当しない役職が付いていれば外す
-                    await member.remove_roles(role)
+            if role != after:
+                # 該当しない役職が付いていれば外す
+                await member.remove_roles(role)
+
+        if after is not None and after not in member.roles:
+            await member.add_roles(after)
         
         return before, after
 
