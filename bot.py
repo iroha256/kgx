@@ -191,7 +191,7 @@ class KGX(commands.Bot):
 
         now = bisect.bisect(threshold, score)-1
 
-        ch = self.bot.get_channel(628807266753183754)
+        ch = self.get_channel(628807266753183754)
         await ch.send(f"{now}")
 
         after = bidscore_roles[now]
