@@ -201,8 +201,8 @@ class KGX(commands.Bot):
         after = bidscore_roles[now]
 
         before = None
-        for role in bidscore_roles[1:]:
-        #for role in bidscore_roles:
+        #for role in bidscore_roles[1:]:
+        for role in bidscore_roles:
             if role in member.roles:
                 # 付いていた役職を取得
                 before = role
