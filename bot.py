@@ -190,13 +190,17 @@ class KGX(commands.Bot):
         threshold = [1, 3, 5, 10, 30, 60, 100]
 
         now = bisect.bisect(threshold, score)-1
-        
+
+        ch = self.bot.get_channel(628807266753183754)
+        await ch.send(f"{now}")
+
         after = bidscore_roles[now]
         if after is not None and after not in member.roles:
             await member.add_roles(after)
 
         before = None
-        for role in bidscore_roles[1:]:
+#        for role in bidscore_roles[1:]:
+        for role in bidscore_roles:
             if role in member.roles:
                 # 付いていた役職を取得
                 before = role
