@@ -9,8 +9,23 @@ class RawReactionAdd(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         # botが付けたリアクションは早期リターンする
-        if payload.member.bot:
-            return
+        try:
+            if payload.member.bot:
+                return
+        except AttributeError:
+            try:
+                ch = self.bot.get_channel(628807266753183754)
+                channel = self.bot.get_channel(payload.channel_id)
+                message = await channel.fetch_message(payload.message_id)
+                await ch.send(
+                    "on_raw_reaction_addでAttributeError\n"
+                    f"msg: {message.jump_url}\n"
+                    f"mem: {payload.member} <-予想が正しければNonetype"
+                )
+            except:
+                ch = self.bot.get_channel(628807266753183754)
+                await ch.send("エラー検知でまだエラー")
+                return
 
         # 今回、各種権限の不足については考慮していない
         # また、役職IDが存在しない場合も考慮していない
