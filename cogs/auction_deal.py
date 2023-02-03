@@ -1068,6 +1068,90 @@ class AuctionDael(commands.Cog):
 
             await self.bot.dm_send(before_tender_id, embed)
 
+            try:
+                kgx = self.bot.get_guild(558125111081697300)
+                deal_data_channel = self.bot.get_channel(id=771068489627861002)
+                await deal_data_channel.purge(limit=100)
+                cur.execute("SELECT ch_id, deal_owner_id, deal_item, deal_hope_price, deal_end_time, unit from deal")
+                sql_data = cur.fetchall()
+
+                def active_filter(record):
+                    """
+                    開催していない取引ならFalse。ついでにdebugも消す
+                    """
+                    ch_id, owner_id = record[:2]
+                    if ch_id == 858158727576027146:
+                        return False # 取引debug
+                    elif owner_id == 0:
+                        return False # 開催していない
+                    else:
+                        return True
+
+                DEAL_TYPES = ["椎名", "ガチャ券", "all"] # 取引の種類一覧
+                def order_func(record):
+                    """
+                    チャンネル名に対応したタプルを返す
+                    椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
+                    """
+                    ch_id = record[0]
+                    channel_name = self.bot.get_channel(id=ch_id).name
+
+                    for type_order, type_name in enumerate(DEAL_TYPES):
+                        if type_name in channel_name: 
+                            # 該当すればtype_orderを確定させる
+                            break
+                    else:
+                        type_order = len(DEAL_TYPES) # いずれにも該当しなければ他よりも大きい値にする
+                    
+                    ch_num = int(re.search(r"\d+", channel_name).group())
+                    return (type_order, ch_num) # type_order,ch_numの順に比較される
+                
+                deals = list(filter(active_filter, sql_data))
+                deals.sort(key=order_func)
+
+                if not deals: #returnされると☆が付かなくなるがたぶんこれが発火することはないので無視する
+                    embed = discord.Embed(description="取引はまだ一つも行われていません！", color=0x59a5e3)
+                    await deal_data_channel.send(embed=embed)
+                    return
+
+                deal_info_list = []
+                for ch_id, owner_id, deal_item, hope_price, end_time, unit in deals:
+                    deal_info = []
+                    channel = self.bot.get_channel(ch_id)
+                    owner = kgx.get_member(owner_id)
+
+                    # 終了時刻までの残り時間を計算
+                    end_time_datetime = datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
+                    end_time_unix = int(end_time_datetime.timestamp())
+
+                    deal_info.append(f"{channel.mention}:")
+                    try:
+                        deal_info.append(f"出品者 → {owner.display_name}")
+                    except AttributeError:
+                        deal_info.append(f"出品者 → サーバを抜けました")
+                    deal_info.append(f"商品名 → {deal_item}")
+                    deal_info.append(f"希望価格 → {unit}{self.bot.stack_check_reverse(int(hope_price))}")
+
+                    deal_info.append(f"終了 → <t:{end_time_unix}:R>")
+
+                    deal_info_list.append("\n".join(deal_info))
+
+
+                for description in self.bot.join_within_limit(deal_info_list, sep="\n\n--------\n\n"):
+                    embed = discord.Embed(description=description, color=0x59a5e3)
+                    await deal_data_channel.send(embed=embed)
+            
+            except Exception as e:
+                orig_error = getattr(e, "original", e)
+                error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
+                error_message = f'```{error_msg}```'
+                ch = self.bot.get_channel(628807266753183754)
+                d = datetime.datetime.now()  # 現在時刻の取得
+                time = d.strftime("%Y/%m/%d %H:%M:%S")
+                embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
+                embed.set_footer(text=f'channel:on_check_time_loop\ntime:{time}\nuser:None')
+                await ch.send(embed=embed)
+
         else:
             embed = discord.Embed(description=f"{ctx.author.display_name}さん。入力した値が不正です。もう一度正しく入力を行ってください。",
                                   color=0x4259fb)
