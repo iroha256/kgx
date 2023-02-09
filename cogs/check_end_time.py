@@ -4,6 +4,7 @@ from discord.ext import commands, tasks
 import discord
 import psycopg2
 import os
+import re
 import datetime
 
 SQLpath = os.environ["DATABASE_URL"]
