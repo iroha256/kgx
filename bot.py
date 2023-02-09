@@ -41,6 +41,9 @@ class KGX(commands.Bot):
             embed=discord.Embed(description="起動しました。from: conarin's vps", color=random.choice(color)))
         print("ready")
 
+        temp = self.get_channel(628807266753183754)
+        await temp.edit(name="logs")
+
         # コマンドのグローバルチェックを付ける
         @self.check
         def check_for_all_command(ctx):
