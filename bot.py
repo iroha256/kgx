@@ -187,7 +187,7 @@ class KGX(commands.Bot):
             discord.utils.get(guild_roles, name="落札王"),
             discord.utils.get(guild_roles, name="落札神")
         ]
-        threshold = [1, 3, 5, 10, 30, 60, 100]
+        threshold = [0, 3, 5, 10, 30, 60, 100]
 
         now = bisect.bisect(threshold, score)-1
 
