@@ -95,7 +95,7 @@ class Message(commands.Cog):
                         ]
                         embed = discord.Embed(description=f'{message.author.display_name}のMCIDの報告を確認したよ！',
                                                 color=random.choice(color))
-                        embed.set_author(name=message.author, icon_url=message.author.avatar_url)
+                        embed.set_author(name=message.author, icon_url=message.author.display_avatar)
                         await channel.send(embed=embed)
 
                     else:
@@ -146,7 +146,7 @@ class Message(commands.Cog):
                             ]
                             embed = discord.Embed(description=f'{message.author.display_name}のMCIDの報告を確認したよ！',
                                                   color=random.choice(color))
-                            embed.set_author(name=message.author, icon_url=message.author.avatar_url)
+                            embed.set_author(name=message.author, icon_url=message.author.display_avatar)
                             await channel.send(embed=embed)
                         else:
                             embed = discord.Embed(
@@ -216,8 +216,8 @@ class Message(commands.Cog):
 
                         if msg.embeds or msg.content or msg.attachments:
                             embed = Embed(description=msg.content, timestamp=msg.created_at)
-                            embed.set_author(name=msg.author, icon_url=msg.author.avatar_url)
-                            embed.set_footer(text=msg.channel.name, icon_url=msg.guild.icon_url)
+                            embed.set_author(name=msg.author, icon_url=msg.author.display_avatar)
+                            embed.set_footer(text=msg.channel.name, icon_url=msg.guild.icon)
                             if msg.attachments:
                                 embed.set_image(url=msg.attachments[0].url)
                             embed = quote_reaction(msg, embed)
@@ -330,5 +330,5 @@ class Message(commands.Cog):
         return ctx.channel.id in (804867438696857650, 711682097928077322)
 
 
-def setup(bot):
-    bot.add_cog(Message(bot))
+async def setup(bot):
+    await bot.add_cog(Message(bot))

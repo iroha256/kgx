@@ -30,7 +30,7 @@ class CheckUser(commands.Cog):
                 if auction_owner_id == 0:
                     continue
                 if not kgx.get_member(auction_owner_id):
-                    ch = self.bot.get_channel(id=ch_id)
+                    ch = self.bot.get_channel(ch_id)
                     d = datetime.datetime.now()  # 現在時刻の取得
                     time = d.strftime("%Y/%m/%d %H:%M:%S")
 
@@ -56,7 +56,7 @@ class CheckUser(commands.Cog):
                 if deal_owner_id == 0:
                     continue
                 if not kgx.get_member(deal_owner_id):
-                    ch = self.bot.get_channel(id=ch_id)
+                    ch = self.bot.get_channel(ch_id)
                     d = datetime.datetime.now()  # 現在時刻の取得
                     time = d.strftime("%Y/%m/%d %H:%M:%S")
 
@@ -87,5 +87,5 @@ class CheckUser(commands.Cog):
             await ch.send(embed=embed)
 
 
-def setup(bot):
-    bot.add_cog(CheckUser(bot))
+async def setup(bot):
+    await bot.add_cog(CheckUser(bot))

@@ -41,5 +41,5 @@ class RawReactionAdd(commands.Cog):
                 await payload.member.send(f"役職「{role.name}」を{action}しました")
 
 
-def setup(bot):
-    bot.add_cog(RawReactionAdd(bot))
+async def setup(bot):
+    await bot.add_cog(RawReactionAdd(bot))

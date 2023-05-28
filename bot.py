@@ -31,7 +31,7 @@ class KGX(commands.Bot):
         for cog in os.listdir(f"./cogs"):  # cogの読み込み
             if cog.endswith(".py"):
                 try:
-                    self.load_extension(f"cogs.{cog[:-3]}")
+                    await self.load_extension(f"cogs.{cog[:-3]}")
                 except Exception:
                     traceback.print_exc()
 
