@@ -26,7 +26,7 @@ class CheckChannel(commands.Cog):
             cur.execute("SELECT ch_id, auction_owner_id from auction")
             auction_data = cur.fetchall()
             for ch_id, auction_owner_id in auction_data:
-                ch = self.bot.get_channel(id=ch_id)
+                ch = self.bot.get_channel(ch_id)
                 if ch is None:
                     return
                 if auction_owner_id == 0 and "☆" not in ch.name:
@@ -44,7 +44,7 @@ class CheckChannel(commands.Cog):
             cur.execute("SELECT ch_id, deal_owner_id from deal;")
             deal_data = cur.fetchall()
             for ch_id, deal_owner_id in deal_data:
-                ch = self.bot.get_channel(id=ch_id)
+                ch = self.bot.get_channel(ch_id)
                 if deal_owner_id == 0 and "☆" not in ch.name:
                     try:
                         await asyncio.wait_for(ch.edit(name=f"{ch.name}☆"), timeout=3.0)
@@ -68,5 +68,5 @@ class CheckChannel(commands.Cog):
             await ch.send(embed=embed)
 
 
-def setup(bot):
-    bot.add_cog(CheckChannel(bot))
+async def setup(bot):
+    await bot.add_cog(CheckChannel(bot))

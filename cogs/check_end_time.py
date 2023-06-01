@@ -104,7 +104,7 @@ class CheckEndTime(commands.Cog):
 
                     try:
                         kgx = self.bot.get_guild(558125111081697300)
-                        auction_data_channel = self.bot.get_channel(id=771034285352026162)
+                        auction_data_channel = self.bot.get_channel(771034285352026162)
                         await auction_data_channel.purge(limit=100)
                         cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
                                     "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
@@ -130,7 +130,7 @@ class CheckEndTime(commands.Cog):
                             椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
                             """
                             ch_id = record[0]
-                            channel_name = self.bot.get_channel(id=ch_id).name
+                            channel_name = self.bot.get_channel(ch_id).name
 
                             for type_order, type_name in enumerate(AUCTION_TYPES):
                                 if type_name in channel_name: 
@@ -210,7 +210,7 @@ class CheckEndTime(commands.Cog):
                 if deal_end_time == "undefined":
                     continue
                 if datetime.datetime.strptime(deal_end_time, "%Y/%m/%d-%H:%M") <= now:
-                    ch = self.bot.get_channel(id=ch_id)
+                    ch = self.bot.get_channel(ch_id)
                     embed = discord.Embed(description=f"{ch.name}の取引は不成立でしたので終了します")
                     time = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
                     embed.set_footer(text=f'channel:{ch.name}\nTime:{time}')
@@ -227,7 +227,7 @@ class CheckEndTime(commands.Cog):
 
                     try:
                         kgx = self.bot.get_guild(558125111081697300)
-                        deal_data_channel = self.bot.get_channel(id=771068489627861002)
+                        deal_data_channel = self.bot.get_channel(771068489627861002)
                         await deal_data_channel.purge(limit=100)
                         cur.execute("SELECT ch_id, deal_owner_id, deal_item, deal_hope_price, deal_end_time, unit from deal")
                         sql_data = cur.fetchall()
@@ -251,7 +251,7 @@ class CheckEndTime(commands.Cog):
                             椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
                             """
                             ch_id = record[0]
-                            channel_name = self.bot.get_channel(id=ch_id).name
+                            channel_name = self.bot.get_channel(ch_id).name
 
                             for type_order, type_name in enumerate(DEAL_TYPES):
                                 if type_name in channel_name: 
@@ -330,5 +330,5 @@ class CheckEndTime(commands.Cog):
             await ch.send(embed=embed)
 
 
-def setup(bot):
-    bot.add_cog(CheckEndTime(bot))
+async def setup(bot):
+    await bot.add_cog(CheckEndTime(bot))

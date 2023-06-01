@@ -50,7 +50,7 @@ class AuctionDael(commands.Cog):
             if ctx.channel.id == 558265536430211083:
                 embed = discord.Embed(description=f'**{ctx.author.display_name}**の現在の落札ポイントは**{new_score}**です。',
                                     color=0x9d9d9d)
-                embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)  # ユーザー名+ID,アバターをセット
+                embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)  # ユーザー名+ID,アバターをセット
                 await channel.send(embed=embed)
 
             before, after = await ctx.bot.update_bidscore_role(ctx.author, new_score)
@@ -63,11 +63,11 @@ class AuctionDael(commands.Cog):
                 embed = discord.Embed(
                     description=f'**{ctx.author.display_name}**がランクアップ！``{before_name}⇒{after.name}``',
                     color=after.color)
-                embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)  # ユーザー名+ID,アバターをセット
+                embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)  # ユーザー名+ID,アバターをセット
                 await ctx.channel.send(embed=embed)
 
             embed = discord.Embed(description=f'**{ctx.author.display_name}**に落札ポイントを付与しました。', color=0x9d9d9d)
-            embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)  # ユーザー名+ID,アバターをセット
+            embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)  # ユーザー名+ID,アバターをセット
             await ctx.channel.send(embed=embed)
             await asyncio.sleep(0.5)
             # ランキングを出力する
@@ -366,7 +366,7 @@ class AuctionDael(commands.Cog):
 
                 try:
                     kgx = self.bot.get_guild(558125111081697300)
-                    auction_data_channel = self.bot.get_channel(id=771034285352026162)
+                    auction_data_channel = self.bot.get_channel(771034285352026162)
                     await auction_data_channel.purge(limit=100)
                     cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
                                 "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
@@ -392,7 +392,7 @@ class AuctionDael(commands.Cog):
                         椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
                         """
                         ch_id = record[0]
-                        channel_name = self.bot.get_channel(id=ch_id).name
+                        channel_name = self.bot.get_channel(ch_id).name
 
                         for type_order, type_name in enumerate(AUCTION_TYPES):
                             if type_name in channel_name: 
@@ -679,7 +679,7 @@ class AuctionDael(commands.Cog):
 
                 try:
                     kgx = self.bot.get_guild(558125111081697300)
-                    deal_data_channel = self.bot.get_channel(id=771068489627861002)
+                    deal_data_channel = self.bot.get_channel(771068489627861002)
                     await deal_data_channel.purge(limit=100)
                     cur.execute("SELECT ch_id, deal_owner_id, deal_item, deal_hope_price, deal_end_time, unit from deal")
                     sql_data = cur.fetchall()
@@ -703,7 +703,7 @@ class AuctionDael(commands.Cog):
                         椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
                         """
                         ch_id = record[0]
-                        channel_name = self.bot.get_channel(id=ch_id).name
+                        channel_name = self.bot.get_channel(ch_id).name
 
                         for type_order, type_name in enumerate(DEAL_TYPES):
                             if type_name in channel_name: 
@@ -836,7 +836,7 @@ class AuctionDael(commands.Cog):
                     if ctx.channel.id != 747728655735586876: # 椎名debug以外
                         embed = discord.Embed(title="オークション取引結果", color=0x36a64f)
                         embed.add_field(name="落札日", value=f'\n\n{datetime.now().strftime("%Y/%m/%d")}', inline=False)
-                        embed.add_field(name="出品者", value=f'\n\n{self.bot.get_user(id=auction_data[1]).display_name}',
+                        embed.add_field(name="出品者", value=f'\n\n{self.bot.get_user(auction_data[1]).display_name}',
                                         inline=False)
                         embed.add_field(name="品物", value=f'\n\n{auction_data[3]}', inline=False)
                         embed.add_field(name="落札者", value=f'\n\n{ctx.author.display_name}', inline=False)
@@ -844,7 +844,7 @@ class AuctionDael(commands.Cog):
                         embed.add_field(name="チャンネル名", value=f'\n\n{ctx.channel.name}', inline=False)
                         await self.bot.get_channel(558132754953273355).send(embed=embed)
                         # オークションが終わったらその結果を通知
-                    description = f"{ctx.channel.name}にて行われていた{self.bot.get_user(id=auction_data[1]).display_name}による 品物名: **{auction_data[3]}** のオークションは\n{ctx.author.display_name}により" \
+                    description = f"{ctx.channel.name}にて行われていた{self.bot.get_user(auction_data[1]).display_name}による 品物名: **{auction_data[3]}** のオークションは\n{ctx.author.display_name}により" \
                                   f"**{tend_price}**にて落札されました"
                     embed = discord.Embed(description=description, color=0xffaf60)
                     time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
@@ -857,7 +857,7 @@ class AuctionDael(commands.Cog):
                         # INSERTを実行。%sで後ろのタプルがそのまま代入される
                         cur.execute("INSERT INTO bid_ranking VALUES (%s, %s, %s, %s)",
                                     (ctx.author.display_name, auction_data[3], price,
-                                     self.bot.get_user(id=auction_data[1]).display_name))
+                                     self.bot.get_user(auction_data[1]).display_name))
                         db.commit()
                         await self.bot.update_high_bid_ranking()
 
@@ -878,7 +878,7 @@ class AuctionDael(commands.Cog):
 
                     try:
                         kgx = self.bot.get_guild(558125111081697300)
-                        auction_data_channel = self.bot.get_channel(id=771034285352026162)
+                        auction_data_channel = self.bot.get_channel(771034285352026162)
                         await auction_data_channel.purge(limit=100)
                         cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
                                     "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
@@ -904,7 +904,7 @@ class AuctionDael(commands.Cog):
                             椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
                             """
                             ch_id = record[0]
-                            channel_name = self.bot.get_channel(id=ch_id).name
+                            channel_name = self.bot.get_channel(ch_id).name
 
                             for type_order, type_name in enumerate(AUCTION_TYPES):
                                 if type_name in channel_name: 
@@ -1029,7 +1029,7 @@ class AuctionDael(commands.Cog):
             await asyncio.sleep(0.1)
 
             if flag:  # 終了時間が延長される場合は通知する
-                text = f"チャンネル名: {self.bot.get_channel(id=auction[0]).name}において終了1時間前に入札があったため終了時刻を1日延長します。"
+                text = f"チャンネル名: {self.bot.get_channel(auction[0]).name}において終了1時間前に入札があったため終了時刻を1日延長します。"
                 embed = discord.Embed(description=text, color=0x4259fb)
                 time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
                 embed.set_footer(text=f'channel:{ctx.channel.name}\nTime:{time}')
@@ -1070,7 +1070,7 @@ class AuctionDael(commands.Cog):
 
             try:
                 kgx = self.bot.get_guild(558125111081697300)
-                deal_data_channel = self.bot.get_channel(id=771068489627861002)
+                deal_data_channel = self.bot.get_channel(771068489627861002)
                 await deal_data_channel.purge(limit=100)
                 cur.execute("SELECT ch_id, deal_owner_id, deal_item, deal_hope_price, deal_end_time, unit from deal")
                 sql_data = cur.fetchall()
@@ -1094,7 +1094,7 @@ class AuctionDael(commands.Cog):
                     椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
                     """
                     ch_id = record[0]
-                    channel_name = self.bot.get_channel(id=ch_id).name
+                    channel_name = self.bot.get_channel(ch_id).name
 
                     for type_order, type_name in enumerate(DEAL_TYPES):
                         if type_name in channel_name: 
@@ -1250,7 +1250,7 @@ class AuctionDael(commands.Cog):
 
             try:
                 kgx = self.bot.get_guild(558125111081697300)
-                auction_data_channel = self.bot.get_channel(id=771034285352026162)
+                auction_data_channel = self.bot.get_channel(771034285352026162)
                 await auction_data_channel.purge(limit=100)
                 cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
                             "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
@@ -1276,7 +1276,7 @@ class AuctionDael(commands.Cog):
                     椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
                     """
                     ch_id = record[0]
-                    channel_name = self.bot.get_channel(id=ch_id).name
+                    channel_name = self.bot.get_channel(ch_id).name
 
                     for type_order, type_name in enumerate(AUCTION_TYPES):
                         if type_name in channel_name: 
@@ -1474,7 +1474,7 @@ class AuctionDael(commands.Cog):
 
         try:
             kgx = self.bot.get_guild(558125111081697300)
-            deal_data_channel = self.bot.get_channel(id=771068489627861002)
+            deal_data_channel = self.bot.get_channel(771068489627861002)
             await deal_data_channel.purge(limit=100)
             cur.execute("SELECT ch_id, deal_owner_id, deal_item, deal_hope_price, deal_end_time, unit from deal")
             sql_data = cur.fetchall()
@@ -1498,7 +1498,7 @@ class AuctionDael(commands.Cog):
                 椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
                 """
                 ch_id = record[0]
-                channel_name = self.bot.get_channel(id=ch_id).name
+                channel_name = self.bot.get_channel(ch_id).name
 
                 for type_order, type_name in enumerate(DEAL_TYPES):
                     if type_name in channel_name: 
@@ -1587,5 +1587,5 @@ class AuctionDael(commands.Cog):
             await ctx.channel.send(embed=discord.Embed(title="現在の入札状況", description="\n\n".join(tend_info_list), color=0xffaf60))
 
 
-def setup(bot):
-    bot.add_cog(AuctionDael(bot))
+async def setup(bot):
+    await bot.add_cog(AuctionDael(bot))

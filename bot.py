@@ -28,10 +28,11 @@ class KGX(commands.Bot):
         super().__init__(command_prefix=prefix, help_command=None, intents=intents)
         self.cur = cur
 
+    async def setup_hook(self):
         for cog in os.listdir(f"./cogs"):  # cogの読み込み
             if cog.endswith(".py"):
                 try:
-                    self.load_extension(f"cogs.{cog[:-3]}")
+                    await self.load_extension(f"cogs.{cog[:-3]}")
                 except Exception:
                     traceback.print_exc()
 

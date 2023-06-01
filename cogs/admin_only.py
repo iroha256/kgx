@@ -83,7 +83,7 @@ class AdminOnly(commands.Cog):
 
             try:
                 kgx = self.bot.get_guild(558125111081697300)
-                auction_data_channel = self.bot.get_channel(id=771034285352026162)
+                auction_data_channel = self.bot.get_channel(771034285352026162)
                 await auction_data_channel.purge(limit=100)
                 cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
                             "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
@@ -109,7 +109,7 @@ class AdminOnly(commands.Cog):
                     椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
                     """
                     ch_id = record[0]
-                    channel_name = self.bot.get_channel(id=ch_id).name
+                    channel_name = self.bot.get_channel(ch_id).name
 
                     for type_order, type_name in enumerate(AUCTION_TYPES):
                         if type_name in channel_name: 
@@ -187,7 +187,7 @@ class AdminOnly(commands.Cog):
 
             try:
                 kgx = self.bot.get_guild(558125111081697300)
-                deal_data_channel = self.bot.get_channel(id=771068489627861002)
+                deal_data_channel = self.bot.get_channel(771068489627861002)
                 await deal_data_channel.purge(limit=100)
                 cur.execute("SELECT ch_id, deal_owner_id, deal_item, deal_hope_price, deal_end_time, unit from deal")
                 sql_data = cur.fetchall()
@@ -211,7 +211,7 @@ class AdminOnly(commands.Cog):
                     椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
                     """
                     ch_id = record[0]
-                    channel_name = self.bot.get_channel(id=ch_id).name
+                    channel_name = self.bot.get_channel(ch_id).name
 
                     for type_order, type_name in enumerate(DEAL_TYPES):
                         if type_name in channel_name: 
@@ -387,7 +387,7 @@ class AdminOnly(commands.Cog):
                 description=f"{user}の警告Lvが{after_caution_level}になりました。BANしますか？\nはい(BANする): 👍\nいいえ(しない): 👎",
                 color=0xff0000
             )
-            embed.set_thumbnail(url=user.avatar_url)
+            embed.set_thumbnail(url=user.display_avatar)
             msg = await ctx.send(embed=embed)
             await msg.add_reaction("👍")
             await msg.add_reaction("👎")
@@ -460,5 +460,5 @@ class AdminOnly(commands.Cog):
         await ctx.channel.send(f"{role.mention}持ちの{n}人を吹き飛ばしました")
 
 
-def setup(bot):
-    bot.add_cog(AdminOnly(bot))
+async def setup(bot):
+    await bot.add_cog(AdminOnly(bot))

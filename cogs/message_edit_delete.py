@@ -19,9 +19,9 @@ class MessageEditDelete(commands.Cog):
         time = d.strftime("%Y/%m/%d %H:%M:%S")
         embed = Embed(description=f'**Deleted in <#{message.channel.id}>**\n\n{message.content}\n\n',
                       color=0xff0000)  # 発言内容をdescriptionにセット
-        embed.set_author(name=message.author, icon_url=message.author.avatar_url, )  # ユーザー名+ID,アバターをセット
+        embed.set_author(name=message.author, icon_url=message.author.display_avatar, )  # ユーザー名+ID,アバターをセット
         embed.set_footer(text=f'User ID：{message.author.id} Time：{time}',
-                         icon_url=message.guild.icon_url, )  # チャンネル名,時刻,鯖のアイコンをセット
+                         icon_url=message.guild.icon, )  # チャンネル名,時刻,鯖のアイコンをセット
         ch = message.guild.get_channel(628807266753183754)
         await ch.send(embed=embed)
 
@@ -43,12 +43,12 @@ class MessageEditDelete(commands.Cog):
                         f'**after**\n{after.content}\n\n',
             color=0x1e90ff
         )
-        embed.set_author(name=before.author, icon_url=before.author.avatar_url)  # ユーザー名+ID,アバターをセット
+        embed.set_author(name=before.author, icon_url=before.author.display_avatar)  # ユーザー名+ID,アバターをセット
         embed.set_footer(text=f'User ID：{before.author.id} Time：{time}',
-                         icon_url=before.guild.icon_url, )  # チャンネル名,時刻,鯖のアイコンをセット
+                         icon_url=before.guild.icon, )  # チャンネル名,時刻,鯖のアイコンをセット
         ch = before.guild.get_channel(628807266753183754)
         await ch.send(embed=embed)
 
 
-def setup(bot):
-    bot.add_cog(MessageEditDelete(bot))
+async def setup(bot):
+    await bot.add_cog(MessageEditDelete(bot))
