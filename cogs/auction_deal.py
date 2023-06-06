@@ -1460,6 +1460,10 @@ class AuctionDael(commands.Cog):
         cur.execute("SELECT * from deal WHERE ch_id = %s", (ctx.channel.id,))
         dael_data = cur.fetchone()
         owner = self.bot.get_user(int(dael_data[1]))
+        if ctx.author.id == owner:
+            await ctx.channel.send("出品者は取引を承諾できません")
+            return
+
         try:
             await owner.send(f"{ctx.author.display_name}が{ctx.channel.mention}の取引を承諾しました")
         except discord.errors.Forbidden: #DM着信拒否
