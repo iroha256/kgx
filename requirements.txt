@@ -6,7 +6,7 @@ requests==2.26.0
 psycopg2==2.9.6
 Pillow>=7.2.0
 qrcode~=6.1
-discord~=1.0.1
+discord~=1.7.3
 soupsieve~=2.2.1
 cffi~=1.14.6
 pip~=21.2.4
