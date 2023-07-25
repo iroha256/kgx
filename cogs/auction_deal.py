@@ -1038,7 +1038,7 @@ class AuctionDael(commands.Cog):
             time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
             cur.execute(f"SELECT * FROM user_data where user_id = {ctx.author.id}")
             sql_data = cur.fetchone()
-            player_head_avatarurl = f"https://cravatar.eu/helmhead/{sql_data[3][0]}"  # uuidのカラムがなーぜかlistで保管されているため[0]で取り出し
+            player_head_avatarurl = f"https://mc-heads.net/avatar/{sql_data[3][0]}/100"  # uuidのカラムがなーぜかlistで保管されているため[0]で取り出し
             image = requests.get(player_head_avatarurl)
             image = io.BytesIO(image.content)
             image.seek(0)
@@ -1244,7 +1244,7 @@ class AuctionDael(commands.Cog):
             
                 cur.execute(f"SELECT uuid FROM user_data where user_id = %s", (last_tender_id,))
                 uuid_list, = cur.fetchone()
-                player_head_avatarurl = f"https://cravatar.eu/helmhead/{uuid_list[0]}"  # uuidのカラムがなーぜかlistで保管されているため[0]で取り出し
+                player_head_avatarurl = f"https://mc-heads.net/avatar/{uuid_list[0]}/100"  # uuidのカラムがなーぜかlistで保管されているため[0]で取り出し
                 image = requests.get(player_head_avatarurl)
                 image = io.BytesIO(image.content)
                 image.seek(0)
