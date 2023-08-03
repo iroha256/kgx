@@ -1053,21 +1053,6 @@ class AuctionDael(commands.Cog):
             embed.set_footer(text=f"入札時刻: {time}")
             await ctx.send(file=image, embed=embed)
 
-            # 一つ前のtenderにDMする。ただし存在を確認してから。[0,なにか](初回tend)は送信しない(before_tender==0)
-            # 今までの状態だと初回IndexErrorが発生するので順番を前に持ってきました
-            if len(tend[1]) == 1:  # 初回の入札(tend_data=[0]の状態)は弾く
-                return
-
-            before_tender_id = int(tend[1][-1])
-
-            text = f"チャンネル名: {ctx.channel.name}において貴方より高い入札がされました。\n" \
-                   f"入札者: {ctx.author.display_name}, 入札額: **{auction[7]}{self.bot.stack_check_reverse(self.bot.stack_check(price))}**\n"
-            embed = discord.Embed(description=text, color=0x4259fb)
-            time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-            embed.set_footer(text=f'channel:{ctx.channel.name}\nTime:{time}')
-
-            await self.bot.dm_send(before_tender_id, embed)
-
             try:
                 kgx = self.bot.get_guild(558125111081697300)
                 auction_data_channel = self.bot.get_channel(771034285352026162)
@@ -1099,15 +1084,15 @@ class AuctionDael(commands.Cog):
                     channel_name = self.bot.get_channel(ch_id).name
 
                     for type_order, type_name in enumerate(AUCTION_TYPES):
-                        if type_name in channel_name: 
+                        if type_name in channel_name:
                             # 該当すればtype_orderを確定させる
                             break
                     else:
                         type_order = len(AUCTION_TYPES) # いずれにも該当しなければ他よりも大きい値にする
-                    
+
                     ch_num = int(re.search(r"\d+", channel_name).group())
                     return (type_order, ch_num) # type_order,ch_numの順に比較される
-                
+
                 auctions = list(filter(active_filter, sql_data))
                 auctions.sort(key=order_func)
 
@@ -1162,6 +1147,20 @@ class AuctionDael(commands.Cog):
                 embed.set_footer(text=f'channel:on_check_time_loop\ntime:{time}\nuser:None')
                 await ch.send(embed=embed)
 
+            # 一つ前のtenderにDMする。ただし存在を確認してから。[0,なにか](初回tend)は送信しない(before_tender==0)
+            # 今までの状態だと初回IndexErrorが発生するので順番を前に持ってきました
+            if len(tend[1]) == 1:  # 初回の入札(tend_data=[0]の状態)は弾く
+                return
+
+            before_tender_id = int(tend[1][-1])
+
+            text = f"チャンネル名: {ctx.channel.name}において貴方より高い入札がされました。\n" \
+                   f"入札者: {ctx.author.display_name}, 入札額: **{auction[7]}{self.bot.stack_check_reverse(self.bot.stack_check(price))}**\n"
+            embed = discord.Embed(description=text, color=0x4259fb)
+            time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+            embed.set_footer(text=f'channel:{ctx.channel.name}\nTime:{time}')
+
+            await self.bot.dm_send(before_tender_id, embed)
         else:
             embed = discord.Embed(description=f"{ctx.author.display_name}さん。入力した値が不正です。もう一度正しく入力を行ってください。",
                                   color=0x4259fb)
