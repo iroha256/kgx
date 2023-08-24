@@ -23,11 +23,11 @@ class AuctionDael(commands.Cog):
     """オークション、取引に関するcog"""
 
     def is_admin(self, user):
-        kgx_guild = self.bot.get_guild(558125111081697300)
+        kgx_guild = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
         if user.guild != kgx_guild:
             return False
-        admin_role = kgx_guild.get_role(558129132161073164)
-        dev_role = kgx_guild.get_role(558138575225356308)
+        admin_role = kgx_guild.get_role(int(os.environ["ADMIN_ROLE_ID"]))
+        dev_role = kgx_guild.get_role(int(os.environ["DEV_ROLE_ID"]))
         return bool(set(user.roles) & {admin_role, dev_role})
 
     def __init__(self, bot):
@@ -35,10 +35,10 @@ class AuctionDael(commands.Cog):
 
     @commands.command(aliases=["bs"])
     async def bidscore(self, ctx, pt: int):  # カウントしてその数字に対応する役職を付与する
-        if ctx.channel.id not in (558265536430211083, 711682097928077322):
+        if ctx.channel.id not in (int(os.environ["BID_SCORE_APPLICATION_CHANNEL_ID"]), int(os.environ["DEV_COMMAND_CHANNEL_ID"])):
             return # 落札申請所またはbot-commandのみ使用可能
 
-        channel = self.bot.get_channel(602197766218973185)
+        channel = self.bot.get_channel(int(os.environ["BID_SCORE_NOTIFICATION_CHANNEL_ID"]))
         p = re.compile(r'^[0-9]+$')
         if p.fullmatch(str(pt)):
             cur.execute("SELECT bid_score FROM user_data where user_id = %s", (ctx.author.id,))
@@ -47,7 +47,7 @@ class AuctionDael(commands.Cog):
             cur.execute("UPDATE user_data SET bid_score = %s WHERE user_id = %s", (new_score, ctx.author.id))
             db.commit()
 
-            if ctx.channel.id == 558265536430211083:
+            if ctx.channel.id == int(os.environ["BID_SCORE_APPLICATION_CHANNEL_ID"]):
                 embed = discord.Embed(description=f'**{ctx.author.display_name}**の現在の落札ポイントは**{new_score}**です。',
                                     color=0x9d9d9d)
                 embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)  # ユーザー名+ID,アバターをセット
@@ -120,8 +120,8 @@ class AuctionDael(commands.Cog):
         if self.bot.is_auction_category(ctx):
 
             # 既にオークションが行われていたらreturn
-            if "☆" not in ctx.channel.name:
-                description = "このチャンネルでは既にオークションが行われています。\n☆がついているチャンネルでオークションを始めてください。"
+            if os.environ["NOT_HELD_SUFFIX"] not in ctx.channel.name:
+                description = f"このチャンネルでは既にオークションが行われています。\n{os.environ['NOT_HELD_SUFFIX']}がついているチャンネルでオークションを始めてください。"
                 await ctx.channel.send(embed=discord.Embed(description=description, color=0xf04747), delete_after=3)
                 await asyncio.sleep(3)
                 await ctx.message.delete()
@@ -129,9 +129,9 @@ class AuctionDael(commands.Cog):
 
             # 単位の設定
             if self.bot.is_siina_category(ctx):
-                unit = "椎名"
+                unit = os.environ["CURRENCY_TYPE_SHIINA"]
             elif self.bot.is_gacha_category(ctx):
-                unit = "ガチャ券"
+                unit = os.environ["CURRENCY_TYPE_GACHA"]
             else:
                 embed = discord.Embed(description="何によるオークションですか？単位を入力してください。(ex.GTギフト券, がちゃりんご, エメラルド etc)",
                                       color=0xffaf60)
@@ -144,8 +144,8 @@ class AuctionDael(commands.Cog):
                 unit = input_unit.content
 
             # ALLにおいて
-            if "all" in ctx.channel.name.lower() and unit in ("椎名", "椎名林檎", "ガチャ券"):
-                embed = discord.Embed(description="椎名、ガチャ券のオークションは専用のチャンネルで行ってください。",
+            if os.environ["CURRENCY_TYPE_ALL"] in ctx.channel.name.lower() and unit in (os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_SHIINA_2"], os.environ["CURRENCY_TYPE_GACHA"]):
+                embed = discord.Embed(description=f"{os.environ['CURRENCY_TYPE_SHIINA']}、{os.environ['CURRENCY_TYPE_GACHA']}のオークションは専用のチャンネルで行ってください。",
                                       color=0xffaf60)
                 await ctx.channel.send(embed=embed)
                 return
@@ -352,7 +352,7 @@ class AuctionDael(commands.Cog):
                 embed.add_field(name="即決価格", value=f'{display_bin_price}', inline=False)
                 embed.add_field(name="終了日時", value=f'{end_time_text}', inline=True)
                 embed.add_field(name="特記事項", value=f'{input_notice.content}', inline=True)
-                await ctx.channel.send("<:siina:558251559394213888>オークションを開始します<:siina:558251559394213888>")
+                await ctx.channel.send(f"{os.environ['SHIINA_EMOJI']}オークションを開始します{os.environ['SHIINA_EMOJI']}")
                 auction_embed = await ctx.channel.send(embed=embed)
                 await auction_embed.pin()
 
@@ -365,8 +365,8 @@ class AuctionDael(commands.Cog):
                 db.commit()
 
                 try:
-                    kgx = self.bot.get_guild(558125111081697300)
-                    auction_data_channel = self.bot.get_channel(771034285352026162)
+                    kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
+                    auction_data_channel = self.bot.get_channel(int(os.environ["AUCTION_LIST_CHANNEL_ID"]))
                     await auction_data_channel.purge(limit=100)
                     cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
                                 "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
@@ -378,14 +378,14 @@ class AuctionDael(commands.Cog):
                         開催していないオークションならFalse。ついでにdebugも消す
                         """
                         ch_id, owner_id = record[:2]
-                        if ch_id == 747728655735586876:
+                        if ch_id == int(os.environ["AUCTION_DEBUG_CHANNEL_ID"]):
                             return False # 椎名debug
                         elif owner_id == 0:
                             return False # 開催していない
                         else:
                             return True
 
-                    AUCTION_TYPES = ["椎名", "ガチャ券", "all", "闇取引"] # オークションの種類一覧
+                    AUCTION_TYPES = [os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_GACHA"], os.environ["CURRENCY_TYPE_ALL"], os.environ["CURRENCY_TYPE_DARK"]] # オークションの種類一覧
                     def order_func(record):
                         """
                         チャンネル名に対応したタプルを返す
@@ -451,7 +451,7 @@ class AuctionDael(commands.Cog):
                     orig_error = getattr(e, "original", e)
                     error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
                     error_message = f'```{error_msg}```'
-                    ch = self.bot.get_channel(628807266753183754)
+                    ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
                     d = datetime.datetime.now()  # 現在時刻の取得
                     time = d.strftime("%Y/%m/%d %H:%M:%S")
                     embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
@@ -459,7 +459,7 @@ class AuctionDael(commands.Cog):
                     await ch.send(embed=embed)
 
                 try:
-                    await asyncio.wait_for(ctx.channel.edit(name=ctx.channel.name.split('☆')[0]), timeout=3.0)
+                    await asyncio.wait_for(ctx.channel.edit(name=ctx.channel.name.split(os.environ["NOT_HELD_SUFFIX"])[0]), timeout=3.0)
                 except asyncio.TimeoutError:
                     pass
 
@@ -471,8 +471,8 @@ class AuctionDael(commands.Cog):
         elif self.bot.is_normal_category(ctx):
 
             # 既に取引が行われていたらreturn
-            if "☆" not in ctx.channel.name:
-                description = "このチャンネルでは既に取引が行われています。\n☆がついているチャンネルで取引を始めてください。"
+            if os.environ["NOT_HELD_SUFFIX"] not in ctx.channel.name:
+                description = f"このチャンネルでは既に取引が行われています。\n{os.environ['NOT_HELD_SUFFIX']}がついているチャンネルで取引を始めてください。"
                 await ctx.channel.send(embed=discord.Embed(description=description, color=0xf04747))
                 await asyncio.sleep(3)
                 await ctx.channel.purge(limit=2)
@@ -480,9 +480,9 @@ class AuctionDael(commands.Cog):
 
             # 単位の設定
             if self.bot.is_siina_category(ctx):
-                unit = "椎名"
+                unit = os.environ["CURRENCY_TYPE_SHIINA"]
             elif self.bot.is_gacha_category(ctx):
-                unit = "ガチャ券"
+                unit = os.environ["CURRENCY_TYPE_GACHA"]
             else:
                 embed = discord.Embed(description="何による取引ですか？単位を入力してください。(ex.GTギフト券, がちゃりんご, エメラルド etc)",
                                       color=0xffaf60)
@@ -495,9 +495,9 @@ class AuctionDael(commands.Cog):
                 unit = input_unit.content
 
             # ALLにおいて
-            if "all" in ctx.channel.name.lower() and unit in ("椎名", "椎名林檎", "ガチャ券"):
+            if os.environ["CURRENCY_TYPE_ALL"] in ctx.channel.name.lower() and unit in (os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_SHIINA_2"], os.environ["CURRENCY_TYPE_GACHA"]):
                 await ctx.channel.purge(limit=2)
-                embed = discord.Embed(description="椎名、ガチャ券の取引は専用のチャンネルで行ってください。",
+                embed = discord.Embed(description=f"{os.environ['CURRENCY_TYPE_SHIINA']}、{os.environ['CURRENCY_TYPE_GACHA']}の取引は専用のチャンネルで行ってください。",
                                       color=0xffaf60)
                 await ctx.channel.send(embed=embed)
                 await ctx.channel.send("--------ｷﾘﾄﾘ線--------")
@@ -667,7 +667,7 @@ class AuctionDael(commands.Cog):
                 embed.add_field(name="終了日時", value=f'{end_time_text}', inline=True)
                 embed.add_field(name="特記事項", value=f'{input_notice.content}', inline=False)
                 await ctx.channel.send(
-                    "<:shiina_balance:558175954686705664>取引を開始します<:shiina_balance:558175954686705664>")
+                    f"{os.environ['SHIINA_BALANCE_EMOJI']}取引を開始します{os.environ['SHIINA_BALANCE_EMOJI']}")
                 deal_embed = await ctx.channel.send(embed=embed)
                 await deal_embed.pin()
 
@@ -678,8 +678,8 @@ class AuctionDael(commands.Cog):
                 db.commit()
 
                 try:
-                    kgx = self.bot.get_guild(558125111081697300)
-                    deal_data_channel = self.bot.get_channel(771068489627861002)
+                    kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
+                    deal_data_channel = self.bot.get_channel(int(os.environ["DEAL_LIST_CHANNEL_ID"]))
                     await deal_data_channel.purge(limit=100)
                     cur.execute("SELECT ch_id, deal_owner_id, deal_item, deal_hope_price, deal_end_time, unit from deal")
                     sql_data = cur.fetchall()
@@ -689,14 +689,14 @@ class AuctionDael(commands.Cog):
                         開催していない取引ならFalse。ついでにdebugも消す
                         """
                         ch_id, owner_id = record[:2]
-                        if ch_id == 858158727576027146:
+                        if ch_id == int(os.environ["DEAL_DEBUG_CHANNEL_ID"]):
                             return False # 取引debug
                         elif owner_id == 0:
                             return False # 開催していない
                         else:
                             return True
 
-                    DEAL_TYPES = ["椎名", "ガチャ券", "all"] # 取引の種類一覧
+                    DEAL_TYPES = [os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_GACHA"], os.environ["CURRENCY_TYPE_ALL"]] # 取引の種類一覧
                     def order_func(record):
                         """
                         チャンネル名に対応したタプルを返す
@@ -754,7 +754,7 @@ class AuctionDael(commands.Cog):
                     orig_error = getattr(e, "original", e)
                     error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
                     error_message = f'```{error_msg}```'
-                    ch = self.bot.get_channel(628807266753183754)
+                    ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
                     d = datetime.datetime.now()  # 現在時刻の取得
                     time = d.strftime("%Y/%m/%d %H:%M:%S")
                     embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
@@ -762,7 +762,7 @@ class AuctionDael(commands.Cog):
                     await ch.send(embed=embed)
 
                 try:
-                    await asyncio.wait_for(ctx.channel.edit(name=ctx.channel.name.split('☆')[0]), timeout=3.0)
+                    await asyncio.wait_for(ctx.channel.edit(name=ctx.channel.name.split(os.environ["NOT_HELD_SUFFIX"])[0]), timeout=3.0)
                 except asyncio.TimeoutError:
                     pass
 
@@ -779,7 +779,7 @@ class AuctionDael(commands.Cog):
             return
 
         # そもそもオークションが開催してなかったらreturn
-        if '☆' in ctx.channel.name:
+        if os.environ["NOT_HELD_SUFFIX"] in ctx.channel.name:
             embed = discord.Embed(
                 description=f'{ctx.author.display_name}さん。このチャンネルではオークションは行われていません',
                 color=0xff0000)
@@ -833,7 +833,7 @@ class AuctionDael(commands.Cog):
                     auction_data = cur.fetchone()
                     tend_price = f"{auction_data[7]}{self.bot.stack_check_reverse(price)}"
 
-                    if ctx.channel.id != 747728655735586876: # 椎名debug以外
+                    if ctx.channel.id != int(os.environ["AUCTION_DEBUG_CHANNEL_ID"]): # 椎名debug以外
                         embed = discord.Embed(title="オークション取引結果", color=0x36a64f)
                         embed.add_field(name="落札日", value=f'\n\n{datetime.now().strftime("%Y/%m/%d")}', inline=False)
                         embed.add_field(name="出品者", value=f'\n\n{self.bot.get_user(auction_data[1]).display_name}',
@@ -842,7 +842,7 @@ class AuctionDael(commands.Cog):
                         embed.add_field(name="落札者", value=f'\n\n{ctx.author.display_name}', inline=False)
                         embed.add_field(name="落札価格", value=f'\n\n{tend_price}', inline=False)
                         embed.add_field(name="チャンネル名", value=f'\n\n{ctx.channel.name}', inline=False)
-                        await self.bot.get_channel(558132754953273355).send(embed=embed)
+                        await self.bot.get_channel(int(os.environ["BID_HISTORY_CHANNEL_ID"])).send(embed=embed)
                         # オークションが終わったらその結果を通知
                     description = f"{ctx.channel.name}にて行われていた{self.bot.get_user(auction_data[1]).display_name}による 品物名: **{auction_data[3]}** のオークションは\n{ctx.author.display_name}により" \
                                   f"**{tend_price}**にて落札されました"
@@ -853,7 +853,7 @@ class AuctionDael(commands.Cog):
                     await self.bot.dm_send(ctx.author.id, embed)
 
                     # ランキング送信
-                    if "椎名" in ctx.channel.name and ctx.channel.id != 747728655735586876: # 椎名debug以外
+                    if os.environ["CURRENCY_TYPE_SHIINA"] in ctx.channel.name and ctx.channel.id != int(os.environ["AUCTION_DEBUG_CHANNEL_ID"]): # 椎名debug以外
                         # INSERTを実行。%sで後ろのタプルがそのまま代入される
                         cur.execute("INSERT INTO bid_ranking VALUES (%s, %s, %s, %s)",
                                     (ctx.author.display_name, auction_data[3], price,
@@ -872,13 +872,13 @@ class AuctionDael(commands.Cog):
                     await ctx.channel.send('--------ｷﾘﾄﾘ線--------')
                     await asyncio.sleep(0.3)
                     try:
-                        await asyncio.wait_for(ctx.channel.edit(name=f"{ctx.channel.name}☆"), timeout=3.0)
+                        await asyncio.wait_for(ctx.channel.edit(name=f"{ctx.channel.name}{os.environ['NOT_HELD_SUFFIX']}"), timeout=3.0)
                     except asyncio.TimeoutError:
                         pass
 
                     try:
-                        kgx = self.bot.get_guild(558125111081697300)
-                        auction_data_channel = self.bot.get_channel(771034285352026162)
+                        kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
+                        auction_data_channel = self.bot.get_channel(int(os.environ["AUCTION_LIST_CHANNEL_ID"]))
                         await auction_data_channel.purge(limit=100)
                         cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
                                     "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
@@ -890,14 +890,14 @@ class AuctionDael(commands.Cog):
                             開催していないオークションならFalse。ついでにdebugも消す
                             """
                             ch_id, owner_id = record[:2]
-                            if ch_id == 747728655735586876:
+                            if ch_id == int(os.environ["AUCTION_DEBUG_CHANNEL_ID"]):
                                 return False # 椎名debug
                             elif owner_id == 0:
                                 return False # 開催していない
                             else:
                                 return True
 
-                        AUCTION_TYPES = ["椎名", "ガチャ券", "all", "闇取引"] # オークションの種類一覧
+                        AUCTION_TYPES = [os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_GACHA"], os.environ["CURRENCY_TYPE_ALL"], os.environ["CURRENCY_TYPE_DARK"]] # オークションの種類一覧
                         def order_func(record):
                             """
                             チャンネル名に対応したタプルを返す
@@ -963,7 +963,7 @@ class AuctionDael(commands.Cog):
                         orig_error = getattr(e, "original", e)
                         error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
                         error_message = f'```{error_msg}```'
-                        ch = self.bot.get_channel(628807266753183754)
+                        ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
                         d = datetime.datetime.now()  # 現在時刻の取得
                         time = d.strftime("%Y/%m/%d %H:%M:%S")
                         embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
@@ -1054,8 +1054,8 @@ class AuctionDael(commands.Cog):
             await ctx.send(file=image, embed=embed)
 
             try:
-                kgx = self.bot.get_guild(558125111081697300)
-                auction_data_channel = self.bot.get_channel(771034285352026162)
+                kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
+                auction_data_channel = self.bot.get_channel(int(os.environ["AUCTION_LIST_CHANNEL_ID"]))
                 await auction_data_channel.purge(limit=100)
                 cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
                             "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
@@ -1067,14 +1067,14 @@ class AuctionDael(commands.Cog):
                     開催していないオークションならFalse。ついでにdebugも消す
                     """
                     ch_id, owner_id = record[:2]
-                    if ch_id == 747728655735586876:
+                    if ch_id == int(os.environ["AUCTION_DEBUG_CHANNEL_ID"]):
                         return False # 椎名debug
                     elif owner_id == 0:
                         return False # 開催していない
                     else:
                         return True
 
-                AUCTION_TYPES = ["椎名", "ガチャ券", "all", "闇取引"] # オークションの種類一覧
+                AUCTION_TYPES = [os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_GACHA"], os.environ["CURRENCY_TYPE_ALL"], os.environ["CURRENCY_TYPE_DARK"]] # オークションの種類一覧
                 def order_func(record):
                     """
                     チャンネル名に対応したタプルを返す
@@ -1140,7 +1140,7 @@ class AuctionDael(commands.Cog):
                 orig_error = getattr(e, "original", e)
                 error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
                 error_message = f'```{error_msg}```'
-                ch = self.bot.get_channel(628807266753183754)
+                ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
                 d = datetime.datetime.now()  # 現在時刻の取得
                 time = d.strftime("%Y/%m/%d %H:%M:%S")
                 embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
@@ -1199,7 +1199,7 @@ class AuctionDael(commands.Cog):
             auction_owner_id, unit = cur.fetchone()
 
             # オークションが行われていなければ警告して終了
-            if "☆" in ctx.channel.name:
+            if os.environ["NOT_HELD_SUFFIX"] in ctx.channel.name:
                 embed = discord.Embed(description="このコマンドはオークション開催中のみ使用可能です。", color=0x4259fb)
                 await ctx.send(embed=embed)
                 return
@@ -1258,8 +1258,8 @@ class AuctionDael(commands.Cog):
             await ctx.channel.send(file=image, embed=embed)
 
             try:
-                kgx = self.bot.get_guild(558125111081697300)
-                auction_data_channel = self.bot.get_channel(771034285352026162)
+                kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
+                auction_data_channel = self.bot.get_channel(int(os.environ["AUCTION_LIST_CHANNEL_ID"]))
                 await auction_data_channel.purge(limit=100)
                 cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
                             "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
@@ -1271,14 +1271,14 @@ class AuctionDael(commands.Cog):
                     開催していないオークションならFalse。ついでにdebugも消す
                     """
                     ch_id, owner_id = record[:2]
-                    if ch_id == 747728655735586876:
+                    if ch_id == int(os.environ["AUCTION_DEBUG_CHANNEL_ID"]):
                         return False # 椎名debug
                     elif owner_id == 0:
                         return False # 開催していない
                     else:
                         return True
 
-                AUCTION_TYPES = ["椎名", "ガチャ券", "all", "闇取引"] # オークションの種類一覧
+                AUCTION_TYPES = [os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_GACHA"], os.environ["CURRENCY_TYPE_ALL"], os.environ["CURRENCY_TYPE_DARK"]] # オークションの種類一覧
                 def order_func(record):
                     """
                     チャンネル名に対応したタプルを返す
@@ -1344,7 +1344,7 @@ class AuctionDael(commands.Cog):
                 orig_error = getattr(e, "original", e)
                 error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
                 error_message = f'```{error_msg}```'
-                ch = self.bot.get_channel(628807266753183754)
+                ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
                 d = datetime.datetime.now()  # 現在時刻の取得
                 time = d.strftime("%Y/%m/%d %H:%M:%S")
                 embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
@@ -1424,7 +1424,7 @@ class AuctionDael(commands.Cog):
             embed.add_field(name="即決価格", value=f'{display_bin_price}', inline=False)
             embed.add_field(name="終了日時", value=f'{end_time_text}', inline=True)
             embed.add_field(name="特記事項", value=f'{notice}', inline=True)
-            await ctx.channel.send("<:siina:558251559394213888>オークションを開始します<:siina:558251559394213888>")
+            await ctx.channel.send(f"{os.environ['SHIINA_EMOJI']}オークションを開始します{os.environ['SHIINA_EMOJI']}")
             auction_embed = await ctx.channel.send(embed=embed)
             await auction_embed.pin()
 
@@ -1441,7 +1441,7 @@ class AuctionDael(commands.Cog):
             cur.execute("UPDATE tend SET tender_id = %s, tend_price = %s WHERE ch_id = %s", (tender_id, tend_price, ctx.channel.id))
             db.commit()
 
-            await ctx.channel.edit(name=ctx.channel.name.split('☆')[0])
+            await ctx.channel.edit(name=ctx.channel.name.split(os.environ["NOT_HELD_SUFFIX"])[0])
 
             if tend:
                 # 入札があったら履歴を表示
@@ -1458,7 +1458,7 @@ class AuctionDael(commands.Cog):
         if not self.bot.is_normal_category(ctx):
             return
 
-        if '☆' in ctx.channel.name:
+        if os.environ["NOT_HELD_SUFFIX"] in ctx.channel.name:
             embed = discord.Embed(
                 description=f'{ctx.author.display_name}さん。このチャンネルでは取引は行われていません',
                 color=0xff0000)
@@ -1486,8 +1486,8 @@ class AuctionDael(commands.Cog):
         await ctx.channel.send('--------ｷﾘﾄﾘ線--------')
 
         try:
-            kgx = self.bot.get_guild(558125111081697300)
-            deal_data_channel = self.bot.get_channel(771068489627861002)
+            kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
+            deal_data_channel = self.bot.get_channel(int(os.environ["DEAL_LIST_CHANNEL_ID"]))
             await deal_data_channel.purge(limit=100)
             cur.execute("SELECT ch_id, deal_owner_id, deal_item, deal_hope_price, deal_end_time, unit from deal")
             sql_data = cur.fetchall()
@@ -1497,14 +1497,14 @@ class AuctionDael(commands.Cog):
                 開催していない取引ならFalse。ついでにdebugも消す
                 """
                 ch_id, owner_id = record[:2]
-                if ch_id == 858158727576027146:
+                if ch_id == int(os.environ["DEAL_DEBUG_CHANNEL_ID"]):
                     return False # 取引debug
                 elif owner_id == 0:
                     return False # 開催していない
                 else:
                     return True
 
-            DEAL_TYPES = ["椎名", "ガチャ券", "all"] # 取引の種類一覧
+            DEAL_TYPES = [os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_GACHA"], os.environ["CURRENCY_TYPE_ALL"]] # 取引の種類一覧
             def order_func(record):
                 """
                 チャンネル名に対応したタプルを返す
@@ -1562,7 +1562,7 @@ class AuctionDael(commands.Cog):
             orig_error = getattr(e, "original", e)
             error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
             error_message = f'```{error_msg}```'
-            ch = self.bot.get_channel(628807266753183754)
+            ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
             d = datetime.datetime.now()  # 現在時刻の取得
             time = d.strftime("%Y/%m/%d %H:%M:%S")
             embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
@@ -1570,7 +1570,7 @@ class AuctionDael(commands.Cog):
             await ch.send(embed=embed)
 
         try:
-            await asyncio.wait_for(ctx.channel.edit(name=f"{ctx.channel.name}☆"), timeout=3.0)
+            await asyncio.wait_for(ctx.channel.edit(name=f"{ctx.channel.name}{os.environ['NOT_HELD_SUFFIX']}"), timeout=3.0)
         except asyncio.TimeoutError:
             pass
 
@@ -1580,7 +1580,7 @@ class AuctionDael(commands.Cog):
         auction_owner_id, unit = cur.fetchone()
 
         # オークションが行われていなければ警告して終了
-        if "☆" in ctx.channel.name:
+        if os.environ["NOT_HELD_SUFFIX"] in ctx.channel.name:
             embed = discord.Embed(description="このコマンドはオークション開催中のみ使用可能です。", color=0x4259fb)
             await ctx.send(embed=embed)
             return
@@ -1595,7 +1595,7 @@ class AuctionDael(commands.Cog):
             tend_info_list = []
 
             for i, (tenders_id, tend_price) in enumerate(zip(tenders_id[1:], tend_prices[1:]), 1):
-                tend_info_list.append(f"{i}: {self.bot.get_guild(558125111081697300).get_member(tenders_id).display_name}, {unit}{self.bot.stack_check_reverse(tend_price)}")
+                tend_info_list.append(f"{i}: {self.bot.get_guild(int(os.environ['KGX_GUILD_ID'])).get_member(tenders_id).display_name}, {unit}{self.bot.stack_check_reverse(tend_price)}")
 
             await ctx.channel.send(embed=discord.Embed(title="現在の入札状況", description="\n\n".join(tend_info_list), color=0xffaf60))
 

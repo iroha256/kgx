@@ -29,14 +29,14 @@ class CheckChannel(commands.Cog):
                 ch = self.bot.get_channel(ch_id)
                 if ch is None:
                     return
-                if auction_owner_id == 0 and "☆" not in ch.name:
+                if auction_owner_id == 0 and os.environ["NOT_HELD_SUFFIX"] not in ch.name:
                     try:
-                        await asyncio.wait_for(ch.edit(name=f"{ch.name}☆"), timeout=3.0)
+                        await asyncio.wait_for(ch.edit(name=f"{ch.name}{os.environ['NOT_HELD_SUFFIX']}"), timeout=3.0)
                     except asyncio.TimeoutError:
                         continue
-                elif auction_owner_id != 0 and "☆" in ch.name:
+                elif auction_owner_id != 0 and os.environ["NOT_HELD_SUFFIX"] in ch.name:
                     try:
-                        await asyncio.wait_for(ch.edit(name=ch.name.split('☆')[0]), timeout=3.0)
+                        await asyncio.wait_for(ch.edit(name=ch.name.split(os.environ["NOT_HELD_SUFFIX"])[0]), timeout=3.0)
                     except asyncio.TimeoutError:
                         continue
 
@@ -45,14 +45,14 @@ class CheckChannel(commands.Cog):
             deal_data = cur.fetchall()
             for ch_id, deal_owner_id in deal_data:
                 ch = self.bot.get_channel(ch_id)
-                if deal_owner_id == 0 and "☆" not in ch.name:
+                if deal_owner_id == 0 and os.environ["NOT_HELD_SUFFIX"] not in ch.name:
                     try:
-                        await asyncio.wait_for(ch.edit(name=f"{ch.name}☆"), timeout=3.0)
+                        await asyncio.wait_for(ch.edit(name=f"{ch.name}{os.environ['NOT_HELD_SUFFIX']}"), timeout=3.0)
                     except asyncio.TimeoutError:
                         continue
-                elif deal_owner_id != 0 and "☆" in ch.name:
+                elif deal_owner_id != 0 and os.environ["NOT_HELD_SUFFIX"] in ch.name:
                     try:
-                        await asyncio.wait_for(ch.edit(name=ch.name.split('☆')[0]), timeout=3.0)
+                        await asyncio.wait_for(ch.edit(name=ch.name.split(os.environ["NOT_HELD_SUFFIX"])[0]), timeout=3.0)
                     except asyncio.TimeoutError:
                         continue
 
@@ -60,7 +60,7 @@ class CheckChannel(commands.Cog):
             orig_error = getattr(e, "original", e)
             error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
             error_message = f'```{error_msg}```'
-            ch = self.bot.get_channel(628807266753183754)
+            ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
             d = datetime.datetime.now()  # 現在時刻の取得
             time = d.strftime("%Y/%m/%d %H:%M:%S")
             embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)

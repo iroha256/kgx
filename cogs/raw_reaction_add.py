@@ -1,3 +1,5 @@
+import os
+
 from discord.ext import commands
 import discord
 
@@ -20,16 +22,16 @@ class RawReactionAdd(commands.Cog):
         # また、役職IDが存在しない場合も考慮していない
 
         # ここに反応させたいメッセージIDを入れる
-        if payload.message_id == 726365095797456927:
+        if payload.message_id == int(os.environ["ROLE_PANEL_MESSAGE_ID"]):
             channel = self.bot.get_channel(payload.channel_id)
             message = await channel.fetch_message(payload.message_id)
 
             # ここに反応させたい絵文字IDを入れる
-            if payload.emoji.id == 558175789284196354:
+            if payload.emoji.id == int(os.environ["SHIINA_EMOJI_ID"]):
                 await message.remove_reaction(str(payload.emoji), payload.member)
 
                 # ここに付与,剥奪させたい役職のIDを入れる
-                role = message.guild.get_role(678502401707212800)
+                role = message.guild.get_role(int(os.environ["AUCTION_NOTIFICATION_ROLE_ID"]))
                 if discord.utils.get(payload.member.roles, id=role.id):
                     await payload.member.remove_roles(role, reason="役職剥奪のリアクションを押したため")
                     action = "剥奪"

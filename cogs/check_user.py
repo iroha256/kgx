@@ -22,7 +22,7 @@ class CheckUser(commands.Cog):
     async def check_user(self):
         try:
             await self.bot.wait_until_ready()
-            kgx = self.bot.get_guild(558125111081697300)
+            kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
             # オークションについて
             cur.execute("SELECT ch_id, auction_owner_id, embed_message_id from auction;")
             auction_data = cur.fetchall()
@@ -45,7 +45,7 @@ class CheckUser(commands.Cog):
                     await ch.send('--------ｷﾘﾄﾘ線--------')
                     await asyncio.sleep(0.3)
                     try:
-                        await asyncio.wait_for(ch.edit(name=f"{ch.name}☆"), timeout=3.0)
+                        await asyncio.wait_for(ch.edit(name=f"{ch.name}{os.environ['NOT_HELD_SUFFIX']}"), timeout=3.0)
                     except asyncio.TimeoutError:
                         continue
 
@@ -71,7 +71,7 @@ class CheckUser(commands.Cog):
                     await ch.send('--------ｷﾘﾄﾘ線--------')
                     await asyncio.sleep(0.3)
                     try:
-                        await asyncio.wait_for(ch.edit(name=f"{ch.name}☆"), timeout=3.0)
+                        await asyncio.wait_for(ch.edit(name=f"{ch.name}{os.environ['NOT_HELD_SUFFIX']}"), timeout=3.0)
                     except asyncio.TimeoutError:
                         continue
 
@@ -79,7 +79,7 @@ class CheckUser(commands.Cog):
             orig_error = getattr(e, "original", e)
             error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
             error_message = f'```{error_msg}```'
-            ch = self.bot.get_channel(628807266753183754)
+            ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
             d = datetime.datetime.now()  # 現在時刻の取得
             time = d.strftime("%Y/%m/%d %H:%M:%S")
             embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)

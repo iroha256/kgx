@@ -19,9 +19,9 @@ class AdminOnly(commands.Cog):
         self.bot = bot
 
     async def cog_check(self, ctx):  # cog内のコマンド全てに適用されるcheck
-        if discord.utils.get(ctx.author.roles, name="Administrator"):
+        if discord.utils.get(ctx.author.roles, name=os.environ["ADMIN_ROLE_NAME"]):
             return True
-        if discord.utils.get(ctx.author.roles, id=558138575225356308):  # developer
+        if discord.utils.get(ctx.author.roles, id=int(os.environ["DEV_ROLE_ID"])):  # developer
             return True
         await ctx.send('運営以外のコマンド使用は禁止です')
         return False
@@ -35,8 +35,8 @@ class AdminOnly(commands.Cog):
 
     @commands.command()
     async def check_all_user_ID(self, ctx):
-        channel = self.bot.get_channel(642052474672250880)
-        guild = self.bot.get_guild(558125111081697300)
+        channel = self.bot.get_channel(int(os.environ["USER_ID_LIST_CHANNEL_ID"]))
+        guild = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
         bot_count = 0
         for member in guild.members:
             if member.bot:
@@ -71,7 +71,7 @@ class AdminOnly(commands.Cog):
     @commands.command()
     async def stop_deal(self, ctx):
         # dbのリセット
-        if ">" in ctx.channel.category.name:
+        if os.environ["AUCTION_CATEGORY_PREFIX"] in ctx.channel.category.name:
             cur.execute("SELECT embed_message_id FROM auction where ch_id = %s", (ctx.channel.id,))
             embed_message_id, = cur.fetchone()
             if embed_message_id == 0:
@@ -82,8 +82,8 @@ class AdminOnly(commands.Cog):
             self.bot.reset_ch_db(ctx.channel.id, "a")
 
             try:
-                kgx = self.bot.get_guild(558125111081697300)
-                auction_data_channel = self.bot.get_channel(771034285352026162)
+                kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
+                auction_data_channel = self.bot.get_channel(int(os.environ["AUCTION_LIST_CHANNEL_ID"]))
                 await auction_data_channel.purge(limit=100)
                 cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
                             "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
@@ -95,14 +95,14 @@ class AdminOnly(commands.Cog):
                     開催していないオークションならFalse。ついでにdebugも消す
                     """
                     ch_id, owner_id = record[:2]
-                    if ch_id == 747728655735586876:
+                    if ch_id == int(os.environ["AUCTION_DEBUG_CHANNEL_ID"]):
                         return False # 椎名debug
                     elif owner_id == 0:
                         return False # 開催していない
                     else:
                         return True
 
-                AUCTION_TYPES = ["椎名", "ガチャ券", "all", "闇取引"] # オークションの種類一覧
+                AUCTION_TYPES = [os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_GACHA"], os.environ["CURRENCY_TYPE_ALL"], os.environ["CURRENCY_TYPE_DARK"]] # オークションの種類一覧
                 def order_func(record):
                     """
                     チャンネル名に対応したタプルを返す
@@ -168,14 +168,14 @@ class AdminOnly(commands.Cog):
                 orig_error = getattr(e, "original", e)
                 error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
                 error_message = f'```{error_msg}```'
-                ch = self.bot.get_channel(628807266753183754)
+                ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
                 d = datetime.datetime.now()  # 現在時刻の取得
                 time = d.strftime("%Y/%m/%d %H:%M:%S")
                 embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
                 embed.set_footer(text=f'channel:on_check_time_loop\ntime:{time}\nuser:None')
                 await ch.send(embed=embed)
 
-        elif "*" in ctx.channel.category.name:
+        elif os.environ["DEAL_CATEGORY_PREFIX"] in ctx.channel.category.name:
             cur.execute("SELECT embed_message_id FROM deal where ch_id = %s", (ctx.channel.id,))
             embed_message_id, = cur.fetchone()
             if embed_message_id == 0:
@@ -186,8 +186,8 @@ class AdminOnly(commands.Cog):
             self.bot.reset_ch_db(ctx.channel.id, "d")
 
             try:
-                kgx = self.bot.get_guild(558125111081697300)
-                deal_data_channel = self.bot.get_channel(771068489627861002)
+                kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
+                deal_data_channel = self.bot.get_channel(int(os.environ["DEAL_LIST_CHANNEL_ID"]))
                 await deal_data_channel.purge(limit=100)
                 cur.execute("SELECT ch_id, deal_owner_id, deal_item, deal_hope_price, deal_end_time, unit from deal")
                 sql_data = cur.fetchall()
@@ -197,14 +197,14 @@ class AdminOnly(commands.Cog):
                     開催していない取引ならFalse。ついでにdebugも消す
                     """
                     ch_id, owner_id = record[:2]
-                    if ch_id == 858158727576027146:
+                    if ch_id == int(os.environ["DEAL_DEBUG_CHANNEL_ID"]):
                         return False # 取引debug
                     elif owner_id == 0:
                         return False # 開催していない
                     else:
                         return True
 
-                DEAL_TYPES = ["椎名", "ガチャ券", "all"] # 取引の種類一覧
+                DEAL_TYPES = [os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_GACHA"], os.environ["CURRENCY_TYPE_ALL"]] # 取引の種類一覧
                 def order_func(record):
                     """
                     チャンネル名に対応したタプルを返す
@@ -262,7 +262,7 @@ class AdminOnly(commands.Cog):
                 orig_error = getattr(e, "original", e)
                 error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
                 error_message = f'```{error_msg}```'
-                ch = self.bot.get_channel(628807266753183754)
+                ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
                 d = datetime.datetime.now()  # 現在時刻の取得
                 time = d.strftime("%Y/%m/%d %H:%M:%S")
                 embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
@@ -279,7 +279,7 @@ class AdminOnly(commands.Cog):
         )
         await ctx.channel.send(embed=embed)
         try:
-            await asyncio.wait_for(ctx.channel.edit(name=f"{ctx.channel.name}☆"), timeout=3.0)
+            await asyncio.wait_for(ctx.channel.edit(name=f"{ctx.channel.name}{os.environ['NOT_HELD_SUFFIX']}"), timeout=3.0)
         except asyncio.TimeoutError:
             pass
         await ctx.channel.send('--------ｷﾘﾄﾘ線--------')
@@ -287,12 +287,12 @@ class AdminOnly(commands.Cog):
     @commands.command()
     async def star_delete(self, ctx):
         embed = discord.Embed(
-            description=f"{ctx.author.display_name}により☆を強制的に取り外しました。",
+            description=f"{ctx.author.display_name}により{os.environ['NOT_HELD_SUFFIX']}を強制的に取り外しました。",
             color=0xf04747
         )
         await ctx.channel.send(embed=embed)
         try:
-            await asyncio.wait_for(ctx.channel.edit(name=ctx.channel.name.split('☆')[0]), timeout=3.0)
+            await asyncio.wait_for(ctx.channel.edit(name=ctx.channel.name.split(os.environ["NOT_HELD_SUFFIX"])[0]), timeout=3.0)
         except asyncio.TimeoutError:
             pass
 
@@ -422,7 +422,7 @@ class AdminOnly(commands.Cog):
         await ctx.send(f'{user.display_name}の落札ポイントを{n}にセットしました')
 
         await self.bot.update_bidscore_ranking()
-        channel = self.bot.get_channel(602197766218973185)
+        channel = self.bot.get_channel(int(os.environ["BID_SCORE_NOTIFICATION_CHANNEL_ID"]))
         embed = discord.Embed(
             description=f"{ctx.author.display_name}により、{user.display_name}"
                         f"の落札ポイントが{n}にセットされました。",
