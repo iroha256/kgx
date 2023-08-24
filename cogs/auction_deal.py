@@ -16,8 +16,6 @@ SQLpath = os.environ["DATABASE_URL"]
 db = psycopg2.connect(SQLpath)  # sqlに接続
 cur = db.cursor()  # なんか操作する時に使うやつ
 
-auction_notice_ch_id = 727333695450775613
-
 
 class AuctionDael(commands.Cog):
     """オークション、取引に関するcog"""
