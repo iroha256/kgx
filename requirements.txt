@@ -11,7 +11,7 @@ soupsieve~=2.2.1
 cffi~=1.15.1
 pip~=21.2.4
 idna==3.4
-multidict==5.1.0
+multidict==5.2.0
 six~=1.16.0
 yarl==1.6.3
 attrs~=21.4.0
