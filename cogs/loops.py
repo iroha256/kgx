@@ -22,15 +22,15 @@ class Loops(commands.Cog):
     @tasks.loop(seconds=20)
     async def presence_change_task(self):
         await self.bot.wait_until_ready()
-        game = discord.Game(f"{self.bot.get_guild(558125111081697300).member_count}人を監視中")
+        game = discord.Game(f"{self.bot.get_guild(int(os.environ['KGX_GUILD_ID'])).member_count}人を監視中")
         await self.bot.change_presence(status=discord.Status.online, activity=game)
 
     @tasks.loop(seconds=60)
     async def show_all_auction_channel_info(self):
         try:
             await self.bot.wait_until_ready()
-            kgx = self.bot.get_guild(558125111081697300)
-            auction_data_channel = self.bot.get_channel(771034285352026162)
+            kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
+            auction_data_channel = self.bot.get_channel(int(os.environ["AUCTION_LIST_CHANNEL_ID"]))
             await auction_data_channel.purge(limit=100)
             cur.execute("SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item,"
                         "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM "
@@ -42,14 +42,14 @@ class Loops(commands.Cog):
                 開催していないオークションならFalse。ついでにdebugも消す
                 """
                 ch_id, owner_id = record[:2]
-                if ch_id == 747728655735586876:
+                if ch_id == int(os.environ["AUCTION_DEBUG_CHANNEL_ID"]):
                     return False # 椎名debug
                 elif owner_id == 0:
                     return False # 開催していない
                 else:
                     return True
 
-            AUCTION_TYPES = ["椎名", "ガチャ券", "all", "闇取引"] # オークションの種類一覧
+            AUCTION_TYPES = [os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_GACHA"], os.environ["CURRENCY_TYPE_ALL"], os.environ["CURRENCY_TYPE_DARK"]] # オークションの種類一覧
             def order_func(record):
                 """
                 チャンネル名に対応したタプルを返す
@@ -121,7 +121,7 @@ class Loops(commands.Cog):
             orig_error = getattr(e, "original", e)
             error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
             error_message = f'```{error_msg}```'
-            ch = self.bot.get_channel(628807266753183754)
+            ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
             d = datetime.datetime.now()  # 現在時刻の取得
             time = d.strftime("%Y/%m/%d %H:%M:%S")
             embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
@@ -133,8 +133,8 @@ class Loops(commands.Cog):
     async def show_all_deal_channel_info(self):
         try:
             await self.bot.wait_until_ready()
-            kgx = self.bot.get_guild(558125111081697300)
-            deal_data_channel = self.bot.get_channel(771068489627861002)
+            kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
+            deal_data_channel = self.bot.get_channel(int(os.environ["DEAL_LIST_CHANNEL_ID"]))
             await deal_data_channel.purge(limit=100)
             cur.execute("SELECT ch_id, deal_owner_id, deal_item, deal_hope_price, deal_end_time, unit from deal")
             sql_data = cur.fetchall()
@@ -144,14 +144,14 @@ class Loops(commands.Cog):
                 開催していない取引ならFalse。ついでにdebugも消す
                 """
                 ch_id, owner_id = record[:2]
-                if ch_id == 858158727576027146:
+                if ch_id == int(os.environ["DEAL_DEBUG_CHANNEL_ID"]):
                     return False # 取引debug
                 elif owner_id == 0:
                     return False # 開催していない
                 else:
                     return True
 
-            DEAL_TYPES = ["椎名", "ガチャ券", "all"] # 取引の種類一覧
+            DEAL_TYPES = [os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_GACHA"], os.environ["CURRENCY_TYPE_ALL"]] # 取引の種類一覧
             def order_func(record):
                 """
                 チャンネル名に対応したタプルを返す
@@ -215,7 +215,7 @@ class Loops(commands.Cog):
             orig_error = getattr(e, "original", e)
             error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
             error_message = f'```{error_msg}```'
-            ch = self.bot.get_channel(628807266753183754)
+            ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
             d = datetime.datetime.now()  # 現在時刻の取得
             time = d.strftime("%Y/%m/%d %H:%M:%S")
             embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)

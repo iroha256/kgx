@@ -11,10 +11,13 @@ from typing import Union, List, Generator, Optional
 
 import bs4
 import discord
+from dotenv import load_dotenv
 import psycopg2
 import requests
 from discord import Embed
 from discord.ext import commands
+
+load_dotenv()
 
 SQLpath = os.environ["DATABASE_URL"]
 db = psycopg2.connect(SQLpath)  # sqlに接続
@@ -38,27 +41,27 @@ class KGX(commands.Bot):
 
     async def on_ready(self):
         color = [0x126132, 0x82fc74, 0xfea283, 0x009497, 0x08fad4, 0x6ed843, 0x8005c0]
-        await self.get_channel(722092542249795679).send(
+        await self.get_channel(int(os.environ["STARTUP_NOTIFICATION_CHANNEL_ID"])).send(
             embed=discord.Embed(description="起動しました。from: conarin's vps", color=random.choice(color)))
         print("ready")
 
         # コマンドのグローバルチェックを付ける
         @self.check
         def check_for_all_command(ctx):
-            if not isinstance(ctx.guild, discord.Guild) or ctx.guild.id != 558125111081697300:
+            if not isinstance(ctx.guild, discord.Guild) or ctx.guild.id != int(os.environ["KGX_GUILD_ID"]):
                 return False # KGx以外なら弾く
             # MCID報告済みかどうか
-            return bool(discord.utils.get(ctx.author.roles, id=558999306204479499))
+            return bool(discord.utils.get(ctx.author.roles, id=int(os.environ["MCID_REPORTED_ROLE_ID"])))
     
 
     async def on_guild_channel_create(self, channel):
         """チャンネルが出来た際に自動で星をつける"""
-        if ">" not in channel.category.name and "*" not in channel.category.name:
+        if os.environ["AUCTION_CATEGORY_PREFIX"] not in channel.category.name and os.environ["DEAL_CATEGORY_PREFIX"] not in channel.category.name:
             return
-        if "☆" in channel.name:
+        if os.environ["NOT_HELD_SUFFIX"] in channel.name:
             return
         try:
-            await asyncio.wait_for(channel.edit(name=f"{channel.name}☆"), timeout=3.0)
+            await asyncio.wait_for(channel.edit(name=f"{channel.name}{os.environ['NOT_HELD_SUFFIX']}"), timeout=3.0)
         except asyncio.TimeoutError:
             return
 
@@ -70,7 +73,7 @@ class KGX(commands.Bot):
             orig_error = getattr(error, "original", error)
             error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
             error_message = f'```{error_msg}```'
-            ch = ctx.guild.get_channel(628807266753183754)
+            ch = ctx.guild.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
             d = datetime.now()  # 現在時刻の取得
             time = d.strftime("%Y/%m/%d %H:%M:%S")
             embed = Embed(title='Error_log', description=error_message, color=0xf04747)
@@ -110,7 +113,7 @@ class KGX(commands.Bot):
     async def update_bidscore_ranking(self) -> None:
         """落札ポイントランキングを更新"""
         # user_dataテーブルには「0:ユーザーID bigint, 1:落札ポイント smallint, 2:警告レベル smallint」で格納されているので(0, 1)を、落札ポイント降順になるように出す
-        kgx_server = self.get_guild(558125111081697300)
+        kgx_server = self.get_guild(int(os.environ["KGX_GUILD_ID"]))
         members_id = tuple(member.id for member in kgx_server.members)  # メンバー全員のid
         cur.execute("SELECT user_id, bid_score FROM user_data where user_id in %s ORDER BY bid_score desc;", (members_id,))  # メンバーの情報だけ取得
         data = cur.fetchall()
@@ -133,7 +136,7 @@ class KGX(commands.Bot):
             description=description,
             color=0x48d1cc)  # 発言内容をdescriptionにセット
         embed.set_footer(text=f'UpdateTime：{time}')  # 時刻をセット
-        bidscore_ranking_channel = self.get_channel(677905288665235475)
+        bidscore_ranking_channel = self.get_channel(int(os.environ["BID_SCORE_RANKING_CHANNEL_ID"]))
         await bidscore_ranking_channel.purge(limit=10)
         await bidscore_ranking_channel.send(embed=embed)
 
@@ -156,7 +159,7 @@ class KGX(commands.Bot):
             bidder_name_formatted = bidder_name.replace("_", "\_")
             bid_info += f"{i}位: 出品者->{seller_name_formatted}\n" \
                         f"  　　出品物->{item_name}\n" \
-                        f"  　　落札額->椎名{bot.stack_check_reverse(bid_price)}\n" \
+                        f"  　　落札額->{os.environ['CURRENCY_TYPE_SHIINA']}{bot.stack_check_reverse(bid_price)}\n" \
                         f"  　　落札者->{bidder_name_formatted}"
             bid_ranking.append(bid_info)
 
@@ -171,7 +174,7 @@ class KGX(commands.Bot):
         time = d.strftime("%Y/%m/%d %H:%M:%S")
         embed_list[-1].set_footer(text=f"UpdateTime: {time}")
 
-        bid_price_ranking_channel = self.get_channel(832956663908007946)
+        bid_price_ranking_channel = self.get_channel(int(os.environ["BID_PRICE_RANKING_CHANNEL_ID"]))
         await bid_price_ranking_channel.purge(limit=10)
         for embed in embed_list:
             await bid_price_ranking_channel.send(embed=embed)
@@ -180,13 +183,13 @@ class KGX(commands.Bot):
         guild_roles = member.guild.roles
         """ポイントに応じてroleを更新する"""
         bidscore_roles = [
-            discord.utils.get(guild_roles, name="新星"),
-            discord.utils.get(guild_roles, name="常連"),
-            discord.utils.get(guild_roles, name="金持ち"),
-            discord.utils.get(guild_roles, name="覚醒者"),
-            discord.utils.get(guild_roles, name="登頂者"),
-            discord.utils.get(guild_roles, name="落札王"),
-            discord.utils.get(guild_roles, name="落札神")
+            discord.utils.get(guild_roles, name=os.environ["RISING_STAR_ROLE_NAME"]),   # 新星
+            discord.utils.get(guild_roles, name=os.environ["REGULAR_ROLE_NAME"]),       # 常連
+            discord.utils.get(guild_roles, name=os.environ["RICH_ROLE_NAME"]),          # 金持ち
+            discord.utils.get(guild_roles, name=os.environ["AWAKEN_ROLE_NAME"]),        # 覚醒者
+            discord.utils.get(guild_roles, name=os.environ["SUMMIT_ROLE_NAME"]),        # 登頂者
+            discord.utils.get(guild_roles, name=os.environ["BID_KING_ROLE_NAME"]),      # 落札王
+            discord.utils.get(guild_roles, name=os.environ["BID_GOD_ROLE_NAME"])        # 落札神
         ]
         threshold = [0, 3, 5, 10, 30, 60, 100]
 
@@ -346,13 +349,13 @@ class KGX(commands.Bot):
     @staticmethod
     def is_auction_category(ctx: commands.Context) -> bool:
         """チャンネルがオークションカテゴリに入っているかの真偽値を返す関数"""
-        auction_category_ids = {c.id for c in ctx.guild.categories if c.name.startswith('>')}
+        auction_category_ids = {c.id for c in ctx.guild.categories if c.name.startswith(os.environ["AUCTION_CATEGORY_PREFIX"])}
         return ctx.channel.category_id in auction_category_ids
 
     @staticmethod
     def is_normal_category(ctx: commands.Context) -> bool:
         """チャンネルがノーマルカテゴリに入っているかの真偽値を返す関数"""
-        normal_category_ids = {this.id for this in ctx.guild.categories if this.name.startswith('*')}
+        normal_category_ids = {this.id for this in ctx.guild.categories if this.name.startswith(os.environ["DEAL_CATEGORY_PREFIX"])}
         return ctx.channel.category_id in normal_category_ids
 
     @staticmethod
@@ -364,7 +367,7 @@ class KGX(commands.Bot):
     @staticmethod
     def is_gacha_category(ctx: commands.Context) -> bool:
         """チャンネルがガチャ券カテゴリに入っているかの真偽値を返す関数"""
-        gacha_channel_ids = {gacha.id for gacha in ctx.guild.text_channels if "ガチャ券" in gacha.name}
+        gacha_channel_ids = {gacha.id for gacha in ctx.guild.text_channels if os.environ["CURRENCY_TYPE_GACHA"] in gacha.name}
         return ctx.channel.id in gacha_channel_ids
 
     async def dm_send(self, user_id: int, content) -> bool:
@@ -384,7 +387,7 @@ class KGX(commands.Bot):
         try:
             user = self.get_user(int(user_id))
         except ValueError as e:
-            ch = self.get_channel(628807266753183754)
+            ch = self.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
             await ch.send(user_id)
         try:
             if isinstance(content, discord.Embed):
@@ -422,5 +425,5 @@ class KGX(commands.Bot):
 
 
 if __name__ == '__main__':
-    bot = KGX(prefix="!")
+    bot = KGX(prefix=os.environ["COMMAND_PREFIX"])
     bot.run(os.environ['TOKEN'])

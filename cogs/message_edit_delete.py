@@ -1,3 +1,5 @@
+import os
+
 from discord.ext import commands
 from datetime import datetime
 from discord import Embed
@@ -22,7 +24,7 @@ class MessageEditDelete(commands.Cog):
         embed.set_author(name=message.author, icon_url=message.author.display_avatar, )  # ユーザー名+ID,アバターをセット
         embed.set_footer(text=f'User ID：{message.author.id} Time：{time}',
                          icon_url=message.guild.icon, )  # チャンネル名,時刻,鯖のアイコンをセット
-        ch = message.guild.get_channel(628807266753183754)
+        ch = message.guild.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
         await ch.send(embed=embed)
 
     @commands.Cog.listener()  # point付与の術
@@ -46,7 +48,7 @@ class MessageEditDelete(commands.Cog):
         embed.set_author(name=before.author, icon_url=before.author.display_avatar)  # ユーザー名+ID,アバターをセット
         embed.set_footer(text=f'User ID：{before.author.id} Time：{time}',
                          icon_url=before.guild.icon, )  # チャンネル名,時刻,鯖のアイコンをセット
-        ch = before.guild.get_channel(628807266753183754)
+        ch = before.guild.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
         await ch.send(embed=embed)
 
 

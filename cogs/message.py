@@ -16,8 +16,6 @@ SQLpath = os.environ["DATABASE_URL"]
 db = psycopg2.connect(SQLpath)  # sqlに接続
 cur = db.cursor()  # なんか操作する時に使うやつ
 
-auction_notice_ch_id = 727333695450775613
-
 
 class Message(commands.Cog):
     def __init__(self, bot):
@@ -31,11 +29,11 @@ class Message(commands.Cog):
         try:
             #乗っ取りアカウントを釣る
             #数行前の記述によりbotが乗っ取られても反応しないが仕様
-            if message.channel.id == 896270636656234517: #do not type here
+            if message.channel.id == int(os.environ["BAN_CHANNEL_ID"]): #do not type here
                 comment = f"{message.author.display_name}、id:{message.author.id}を、ハニートラップでbanしました"
                 await message.author.ban(reason=comment)
 
-                log_ch = self.bot.get_channel(628807266753183754) #log
+                log_ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"])) #log
                 embed = discord.Embed(
                     description=comment,
                     color=0xff7700
@@ -44,7 +42,7 @@ class Message(commands.Cog):
                 await message.delete()
 
             # MCID_check
-            if message.channel.id == 558278443440275461:
+            if message.channel.id == int(os.environ["MCID_REPORT_CHANNEL_ID"]):
                 mcid = message.content.replace("\\", "")
                 if re.fullmatch("[a-zA-Z0-9_]{2,16}", mcid):
                     url = f"https://api.mojang.com/users/profiles/minecraft/{mcid}"
@@ -76,8 +74,8 @@ class Message(commands.Cog):
                         cur.execute("INSERT INTO user_data values (%s, %s, %s, ARRAY[%s]);", (message.author.id, 0, 0, uuid))
                         db.commit()
 
-                        role1 = discord.utils.get(message.guild.roles, name="新人")
-                        role2 = discord.utils.get(message.guild.roles, name="MCID報告済み")
+                        role1 = discord.utils.get(message.guild.roles, name=os.environ["ROOKIE_ROLE_NAME"])
+                        role2 = discord.utils.get(message.guild.roles, name=os.environ["MCID_REPORTED_ROLE_NAME"])
                         await message.author.remove_roles(role1)
                         await message.author.add_roles(role2)
                         try:
@@ -87,7 +85,7 @@ class Message(commands.Cog):
 
                         emoji = ['👍', '🙆']
                         await message.add_reaction(random.choice(emoji))
-                        channel = self.bot.get_channel(591244559019802650)
+                        channel = self.bot.get_channel(int(os.environ["MCID_NOTIFICATION_CHANNEL_ID"]))
                         color = [
                             0x3efd73, 0xfb407c, 0xf3f915, 0xc60000,
                             0xed8f10, 0xeacf13, 0x9d9d9d, 0xebb652,
@@ -127,8 +125,8 @@ class Message(commands.Cog):
                             cur.execute("INSERT INTO user_data values (%s, %s, %s, ARRAY[%s]);", (message.author.id, 0, 0, uuid))
                             db.commit()
 
-                            role1 = discord.utils.get(message.guild.roles, name="新人")
-                            role2 = discord.utils.get(message.guild.roles, name="MCID報告済み")
+                            role1 = discord.utils.get(message.guild.roles, name=os.environ["ROOKIE_ROLE_NAME"])
+                            role2 = discord.utils.get(message.guild.roles, name=os.environ["MCID_REPORTED_ROLE_NAME"])
                             await message.author.remove_roles(role1)
                             await message.author.add_roles(role2)
                             try:
@@ -138,7 +136,7 @@ class Message(commands.Cog):
 
                             emoji = ['👍', '🙆']
                             await message.add_reaction(random.choice(emoji))
-                            channel = self.bot.get_channel(591244559019802650)
+                            channel = self.bot.get_channel(int(os.environ["MCID_NOTIFICATION_CHANNEL_ID"]))
                             color = [
                                 0x3efd73, 0xfb407c, 0xf3f915, 0xc60000,
                                 0xed8f10, 0xeacf13, 0x9d9d9d, 0xebb652,
@@ -164,7 +162,7 @@ class Message(commands.Cog):
             #mcid変更申請chでspamが来るとmojangAPIに何度もアクセスさせてしまう
             #一度変更したら何日間アクセスしないとかにすれば防げるがダルい
             #ユーザーの良心を信じる
-            if message.channel.id == 591252285477093388: #mcid変更申請ch
+            if message.channel.id == int(os.environ["MCID_UPDATE_CHANNEL_ID"]): #mcid変更申請ch
                 #カラム名: uuid
                 cur.execute("SELECT * FROM user_data where user_id = %s", (message.author.id,))
                 user_data = cur.fetchone()
@@ -190,10 +188,10 @@ class Message(commands.Cog):
                 
 
             # 引用機能
-            url_filter = [msg.split("/")[1:] for msg in re.split(
-                "https://(ptb.|canary.|)discord(app|).com/channels/558125111081697300((/[0-9]+){2})", message.content)
-                          if
-                          re.match("(/[0-9]+){2}", msg)]
+            message_link_regexp = fr"https://(?:ptb\.|canary\.)?discord(?:app)?\.com/channels/" \
+                                  fr"{re.escape(os.environ['KGX_GUILD_ID'])}((?:/[0-9]+){{2}})"
+            url_filter = [msg.split("/")[1:] for msg in re.split(message_link_regexp, message.content)
+                          if re.match("(/[0-9]+){2}", msg)]
             if len(url_filter) >= 1:
                 for url in url_filter:
                     try:
@@ -237,7 +235,7 @@ class Message(commands.Cog):
 
         except Exception:
             error_message = f'```{traceback.format_exc()}```'
-            ch = message.guild.get_channel(628807266753183754)
+            ch = message.guild.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
             d = datetime.now()  # 現在時刻の取得
             time = d.strftime("%Y/%m/%d %H:%M:%S")
             embed = Embed(title='Error_log', description=error_message, color=0xf04747)
@@ -260,15 +258,15 @@ class Message(commands.Cog):
 
     @commands.command()
     async def uuid_report(self, ctx, mcid: str):
-        if discord.utils.get(ctx.author.roles, name="uuid未チェック"):
+        if discord.utils.get(ctx.author.roles, name=os.environ["UUID_UNCHECKED_ROLE_NAME"]):
             uuid = self.bot.mcid_to_uuid(mcid)
             if uuid:
                 cur.execute(f"update  user_data set uuid = ARRAY['{uuid}'] where user_id = {ctx.author.id}")
                 db.commit()
                 await ctx.send(f"{mcid}さんのuuid: {uuid}をシステムに登録しました。")
-                role = discord.utils.get(ctx.guild.roles, name="uuid未チェック")
+                role = discord.utils.get(ctx.guild.roles, name=os.environ["UUID_UNCHECKED_ROLE_NAME"])
                 await ctx.author.remove_roles(role)
-                role = discord.utils.get(ctx.guild.roles, id=558999306204479499)  # MCID報告済み
+                role = discord.utils.get(ctx.guild.roles, id=int(os.environ["MCID_REPORTED_ROLE_ID"]))  # MCID報告済み
                 await ctx.author.add_roles(role)
             else:
                 await ctx.send(f"MCID:{mcid}は存在しません。もう一度確認してください。")
@@ -327,7 +325,7 @@ class Message(commands.Cog):
     
     def cog_check(self, ctx):
         # 「コマンド」または「bot-command」のみ
-        return ctx.channel.id in (804867438696857650, 711682097928077322)
+        return ctx.channel.id in (int(os.environ["COMMAND_CHANNEL_ID"]), int(os.environ["DEV_COMMAND_CHANNEL_ID"]))
 
 
 async def setup(bot):
