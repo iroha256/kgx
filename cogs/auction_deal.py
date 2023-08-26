@@ -1575,8 +1575,11 @@ class AuctionDael(commands.Cog):
 
             tend_info_list = []
 
-            for i, (tenders_id, tend_price) in enumerate(zip(tenders_id[1:], tend_prices[1:]), 1):
-                tend_info_list.append(f"{i}: {self.bot.get_guild(int(os.environ['KGX_GUILD_ID'])).get_member(tenders_id).display_name}, {unit}{self.bot.stack_check_reverse(tend_price)}")
+            kgx_guild = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
+            for i, (tender_id, tend_price) in enumerate(zip(tenders_id[1:], tend_prices[1:]), 1):
+                tender = kgx_guild.get_member(tender_id) or self.bot.get_user(tender_id)
+                tender_display_name = "Deleted User" if tender is None else tender.display_name
+                tend_info_list.append(f"{i}: {tender_display_name}, {unit}{self.bot.stack_check_reverse(tend_price)}")
 
             await ctx.channel.send(embed=discord.Embed(title="現在の入札状況", description="\n\n".join(tend_info_list), color=0xffaf60))
 
