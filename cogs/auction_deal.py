@@ -1036,20 +1036,12 @@ class AuctionDael(commands.Cog):
             time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
             cur.execute(f"SELECT * FROM user_data where user_id = {ctx.author.id}")
             sql_data = cur.fetchone()
-            player_head_avatarurl = f"https://mc-heads.net/head/{sql_data[3][0]}/100"  # uuidのカラムがなーぜかlistで保管されているため[0]で取り出し
-            image = requests.get(player_head_avatarurl)
-            image = io.BytesIO(image.content)
-            image.seek(0)
-            image = Image.open(image)
-            image = image.resize((100, 100))
-            image.save("./icon.png")
-            image = discord.File("./icon.png", filename="icon.png")
             embed = discord.Embed(description=f"入札者: **{ctx.author.display_name}**, \n"
                                               f"入札額: **{auction[7]}{self.bot.stack_check_reverse(self.bot.stack_check(price))}**\n",
                                   color=0x4259fb)
-            embed.set_image(url="attachment://icon.png")
+            embed.set_image(url=f"https://mc-heads.net/head/{sql_data[3][0]}/100")
             embed.set_footer(text=f"入札時刻: {time}")
-            await ctx.send(file=image, embed=embed)
+            await ctx.send(embed=embed)
 
             try:
                 kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
@@ -1241,19 +1233,10 @@ class AuctionDael(commands.Cog):
             
                 cur.execute(f"SELECT uuid FROM user_data where user_id = %s", (last_tender_id,))
                 uuid_list, = cur.fetchone()
-                player_head_avatarurl = f"https://mc-heads.net/head/{uuid_list[0]}/100"  # uuidのカラムがなーぜかlistで保管されているため[0]で取り出し
-                image = requests.get(player_head_avatarurl)
-                image = io.BytesIO(image.content)
-                image.seek(0)
-                image = Image.open(image)
-                image = image.resize((100, 100))
-                image.save("./icon.png")
-                image = discord.File("./icon.png", filename="icon.png")
-                embed.set_image(url="attachment://icon.png")
-            
+                embed.set_image(url=f"https://mc-heads.net/head/{uuid_list[0]}/100")
             time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
             embed.set_footer(text=f"入札時刻: {time}")
-            await ctx.channel.send(file=image, embed=embed)
+            await ctx.channel.send(embed=embed)
 
             try:
                 kgx = self.bot.get_guild(int(os.environ["KGX_GUILD_ID"]))
