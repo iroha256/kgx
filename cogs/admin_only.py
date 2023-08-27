@@ -19,7 +19,9 @@ class AdminOnly(commands.Cog):
         self.bot = bot
 
     async def cog_check(self, ctx):  # cog内のコマンド全てに適用されるcheck
-        if discord.utils.get(ctx.author.roles, name=os.environ["ADMIN_ROLE_NAME"]):
+        if discord.utils.get(ctx.author.roles, name=os.environ["ADMIN_ROLE_NAME"]): #Administrator
+            return True
+        if discord.utils.get(ctx.author.roles, id=int(os.environ["UNNEI_ROLE_ID"])): #運営
             return True
         if discord.utils.get(ctx.author.roles, id=int(os.environ["DEV_ROLE_ID"])):  # developer
             return True
