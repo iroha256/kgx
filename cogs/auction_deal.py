@@ -25,8 +25,9 @@ class AuctionDael(commands.Cog):
         if user.guild != kgx_guild:
             return False
         admin_role = kgx_guild.get_role(int(os.environ["ADMIN_ROLE_ID"]))
+        unnei_role = kgx_guild.get_role(int(os.environ["UNNEI_ROLE_ID"]))
         dev_role = kgx_guild.get_role(int(os.environ["DEV_ROLE_ID"]))
-        return bool(set(user.roles) & {admin_role, dev_role})
+        return bool(set(user.roles) & {admin_role, unnei_role, dev_role})
 
     def __init__(self, bot):
         self.bot = bot
@@ -182,6 +183,8 @@ class AuctionDael(commands.Cog):
                                    "※次のように入力してください。【〇LC+△ST+□】 or　【〇ST+△】 or 【△】 ex.1lc+1st+1 or 1st+1 or 32**")
                 elif start_price == 0:
                     await ctx.send("開始価格を0にすることはできません。入力しなおしてください。")
+                elif start_price > 2100000000:
+                    await ctx.send("21億を超える入力はできません。入力しなおしてください。")
                 else:  # 正しい入力ならbreak
                     break
 
@@ -212,6 +215,8 @@ class AuctionDael(commands.Cog):
                     await ctx.send("即決価格が開始価格より低いです。入力しなおしてください。")
                 elif bin_price == start_price:
                     await ctx.send("即決価格が開始価格と等しいです。入力しなおしてください。\n価格が決まっているのであれば、取引チャンネルをお使いください。")
+                elif bin_price > 2100000000:
+                    await ctx.send("21億を超える入力はできません。入力しなおしてください。")
                 else:
                     break
 
@@ -534,6 +539,8 @@ class AuctionDael(commands.Cog):
                                    "※次のように入力してください。【〇LC+△ST+□】 or　【〇ST+△】 or 【△】 ex.1lc+1st+1 or 1st+1 or 32**")
                 elif hope_price == 0:
                     await ctx.send("希望価格を0にすることはできません。入力しなおしてください。")
+                elif hope_price > 2100000000:
+                    await ctx.send("21億を超える入力はできません。入力しなおしてください。")
                 else:
                     break
 
@@ -785,6 +792,11 @@ class AuctionDael(commands.Cog):
             return
 
         price = self.bot.stack_check(price)
+        if price > 2100000000:
+            embed = discord.Embed(description="21億を超える入力はできません。", color=0xff0000)
+            await ctx.send(embed=embed)
+            return
+        
 
         if price is not None or price == 0:
             # 開始価格、即決価格、現在の入札額を取り寄せ
@@ -1178,6 +1190,10 @@ class AuctionDael(commands.Cog):
             return
 
         price = tend_data[2][-1] + add_price
+        if price > 2100000000:
+            embed = discord.Embed(description="21億を超える入札はできません。", color=0xff0000)
+            await ctx.send(embed=embed)
+            return
         tend = self.bot.get_command("tend")
         await ctx.invoke(tend, price=str(price))
 
@@ -1194,8 +1210,8 @@ class AuctionDael(commands.Cog):
                 await ctx.send(embed=embed)
                 return
             # オークション主催者じゃなければ警告して終了
-            elif ctx.author.id != auction_owner_id:
-                embed = discord.Embed(description="このコマンドはオークション主催者のみ使用可能です。", color=0x4259fb)
+            elif ctx.author.id != owner_id and not self.is_admin(ctx.author):
+                embed = discord.Embed(description="このコマンドはオークション主催者、運営、開発者のみ使用可能です。", color=0x4259fb)
                 await ctx.send(embed=embed)
                 return
 
