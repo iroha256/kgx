@@ -16,7 +16,8 @@ class SimpleCommand(commands.Cog):
     @commands.command()
     async def version(self, ctx):
         if not self.bot.is_normal_category(ctx) and not self.bot.is_auction_category(ctx):
-            embed = discord.Embed(description="現在のバージョンは**6.0.2**です\nNow version **6.0.2** working.", color=0x4259fb)
+            version = "6.0.3"
+            embed = discord.Embed(description=f"現在のバージョンは**{version}**です\nNow version **{version}** working.", color=0x4259fb)
             await ctx.send(embed=embed)
 
     @commands.command()

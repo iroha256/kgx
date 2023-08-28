@@ -1,11 +1,12 @@
 import asyncio
-import traceback
-from discord.ext import commands, tasks
-import discord
-import psycopg2
+import datetime
 import os
 import re
-import datetime
+import traceback
+
+import discord
+import psycopg2
+from discord.ext import commands, tasks
 
 SQLpath = os.environ["DATABASE_URL"]
 db = psycopg2.connect(SQLpath)  # sqlに接続
