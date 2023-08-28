@@ -1,5 +1,4 @@
 import asyncio
-import io
 import os
 import re
 import traceback
@@ -7,8 +6,6 @@ from datetime import datetime, timedelta
 
 import discord
 import psycopg2
-import requests
-from PIL import Image
 from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 
