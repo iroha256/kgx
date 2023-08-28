@@ -4,7 +4,7 @@ discord.py~=2.2.3
 beautifulsoup4==4.12.2
 requests==2.31.0
 psycopg2==2.9.7
-qrcode~=6.1
+qrcode~=7.4.2
 soupsieve~=2.4.1
 cffi~=1.15.1
 pip~=21.3.1
