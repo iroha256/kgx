@@ -7,15 +7,15 @@ import random
 import re
 import traceback
 from datetime import datetime
-from typing import Union, List, Generator, Optional
+from typing import Generator, List, Optional, Union
 
 import bs4
 import discord
-from dotenv import load_dotenv
 import psycopg2
 import requests
 from discord import Embed
 from discord.ext import commands
+from dotenv import load_dotenv
 
 load_dotenv()
 
