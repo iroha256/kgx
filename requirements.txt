@@ -4,9 +4,7 @@ discord.py~=2.2.3
 beautifulsoup4==4.12.2
 requests==2.31.0
 psycopg2==2.9.7
-Pillow>=7.2.0
 qrcode~=6.1
-discord~=1.0.1
 soupsieve~=2.4.1
 cffi~=1.15.1
 pip~=21.3.1
@@ -20,5 +18,4 @@ chardet==4.0.0
 certifi==2021.10.8
 urllib3==1.26.16
 python-dateutil==2.8.2
-discord-py-slash-command==3.0.3
 python-dotenv~=1.0.0
