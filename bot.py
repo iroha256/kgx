@@ -417,8 +417,14 @@ class KGX(commands.Bot):
         msg = await ctx.channel.fetch_message(msg_id)
         await ctx.channel.purge(limit=None, after=msg)
 
-    async def send_error_log(self, channel_name: str, user_name: str, error_message: str):
-        """エラーメッセージをログチャンネルに送信する関数"""
+    async def send_error_log(self, channel_name: str, user_name: str, error_message: str) -> None:
+        """エラーメッセージをログチャンネルに送信する関数
+
+            Args:
+                channel_name (str): 実行したチャンネル名
+                user_name (str): 実行したユーザー名
+                error_message (str): エラーメッセージ
+        """
         error_message = f"```{error_message}```"
         ch = self.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
         d = datetime.now()  # 現在時刻の取得
