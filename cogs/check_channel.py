@@ -60,13 +60,7 @@ class CheckChannel(commands.Cog):
         except Exception as e:
             orig_error = getattr(e, "original", e)
             error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
-            error_message = f'```{error_msg}```'
-            ch = self.bot.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
-            d = datetime.datetime.now()  # 現在時刻の取得
-            time = d.strftime("%Y/%m/%d %H:%M:%S")
-            embed = discord.Embed(title='Error_log', description=error_message, color=0xf04747)
-            embed.set_footer(text=f'channel:on_check_time_loop\ntime:{time}\nuser:None')
-            await ch.send(embed=embed)
+            await self.bot.send_error_log("on_check_time_loop", "None", error_msg)
 
 
 async def setup(bot):
