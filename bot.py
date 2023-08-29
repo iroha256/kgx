@@ -343,26 +343,24 @@ class KGX(commands.Bot):
     @staticmethod
     def is_auction_category(ctx: commands.Context) -> bool:
         """チャンネルがオークションカテゴリに入っているかの真偽値を返す関数"""
-        auction_category_ids = {c.id for c in ctx.guild.categories if c.name.startswith(os.environ["AUCTION_CATEGORY_PREFIX"])}
-        return ctx.channel.category_id in auction_category_ids
+        category_channel = ctx.channel.category
+        return category_channel is not None and category_channel.name.startswith(os.environ["AUCTION_CATEGORY_PREFIX"])
 
     @staticmethod
     def is_normal_category(ctx: commands.Context) -> bool:
         """チャンネルがノーマルカテゴリに入っているかの真偽値を返す関数"""
-        normal_category_ids = {this.id for this in ctx.guild.categories if this.name.startswith(os.environ["DEAL_CATEGORY_PREFIX"])}
-        return ctx.channel.category_id in normal_category_ids
+        category_channel = ctx.channel.category
+        return category_channel is not None and category_channel.name.startswith(os.environ["DEAL_CATEGORY_PREFIX"])
 
     @staticmethod
     def is_siina_category(ctx: commands.Context) -> bool:
         """チャンネルが椎名カテゴリに入っているかの真偽値を返す関数"""
-        siina_channel_ids = {siina.id for siina in ctx.guild.text_channels if os.environ["CURRENCY_TYPE_SHIINA"] in siina.name}
-        return ctx.channel.id in siina_channel_ids
+        return os.environ["CURRENCY_TYPE_SHIINA"] in ctx.channel.name
 
     @staticmethod
     def is_gacha_category(ctx: commands.Context) -> bool:
         """チャンネルがガチャ券カテゴリに入っているかの真偽値を返す関数"""
-        gacha_channel_ids = {gacha.id for gacha in ctx.guild.text_channels if os.environ["CURRENCY_TYPE_GACHA"] in gacha.name}
-        return ctx.channel.id in gacha_channel_ids
+        return os.environ["CURRENCY_TYPE_GACHA"] in ctx.channel.name
 
     async def dm_send(self, user_id: int, content) -> bool:
         """
