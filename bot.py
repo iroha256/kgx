@@ -177,13 +177,13 @@ class KGX(commands.Bot):
         guild_roles = member.guild.roles
         """ポイントに応じてroleを更新する"""
         bidscore_roles = [
-            discord.utils.get(guild_roles, name=os.environ["RISING_STAR_ROLE_NAME"]),   # 新星
-            discord.utils.get(guild_roles, name=os.environ["REGULAR_ROLE_NAME"]),       # 常連
-            discord.utils.get(guild_roles, name=os.environ["RICH_ROLE_NAME"]),          # 金持ち
-            discord.utils.get(guild_roles, name=os.environ["AWAKEN_ROLE_NAME"]),        # 覚醒者
-            discord.utils.get(guild_roles, name=os.environ["SUMMIT_ROLE_NAME"]),        # 登頂者
-            discord.utils.get(guild_roles, name=os.environ["BID_KING_ROLE_NAME"]),      # 落札王
-            discord.utils.get(guild_roles, name=os.environ["BID_GOD_ROLE_NAME"])        # 落札神
+            discord.utils.get(guild_roles, id=int(os.environ["RISING_STAR_ROLE_ID"])),   # 新星
+            discord.utils.get(guild_roles, id=int(os.environ["REGULAR_ROLE_ID"])),       # 常連
+            discord.utils.get(guild_roles, id=int(os.environ["RICH_ROLE_ID"])),          # 金持ち
+            discord.utils.get(guild_roles, id=int(os.environ["AWAKEN_ROLE_ID"])),        # 覚醒者
+            discord.utils.get(guild_roles, id=int(os.environ["SUMMIT_ROLE_ID"])),        # 登頂者
+            discord.utils.get(guild_roles, id=int(os.environ["BID_KING_ROLE_ID"])),      # 落札王
+            discord.utils.get(guild_roles, id=int(os.environ["BID_GOD_ROLE_ID"]))        # 落札神
         ]
         threshold = [0, 3, 5, 10, 30, 60, 100]
 

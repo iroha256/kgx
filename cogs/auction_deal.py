@@ -22,7 +22,7 @@ class AuctionDael(commands.Cog):
         if user.guild != kgx_guild:
             return False
         admin_role = kgx_guild.get_role(int(os.environ["ADMIN_ROLE_ID"]))
-        unnei_role = kgx_guild.get_role(int(os.environ["UNNEI_ROLE_ID"]))
+        unnei_role = kgx_guild.get_role(int(os.environ["ADMIN_ROLE_ID_2"]))
         dev_role = kgx_guild.get_role(int(os.environ["DEV_ROLE_ID"]))
         return bool(set(user.roles) & {admin_role, unnei_role, dev_role})
 

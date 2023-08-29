@@ -74,8 +74,8 @@ class Message(commands.Cog):
                         cur.execute("INSERT INTO user_data values (%s, %s, %s, ARRAY[%s]);", (message.author.id, 0, 0, uuid))
                         db.commit()
 
-                        role1 = discord.utils.get(message.guild.roles, name=os.environ["ROOKIE_ROLE_NAME"])
-                        role2 = discord.utils.get(message.guild.roles, name=os.environ["MCID_REPORTED_ROLE_NAME"])
+                        role1 = discord.utils.get(message.guild.roles, id=int(os.environ["ROOKIE_ROLE_ID"]))
+                        role2 = discord.utils.get(message.guild.roles, id=int(os.environ["MCID_REPORTED_ROLE_ID"]))
                         await message.author.remove_roles(role1)
                         await message.author.add_roles(role2)
                         try:
@@ -200,13 +200,13 @@ class Message(commands.Cog):
 
     @commands.command()
     async def uuid_report(self, ctx, mcid: str):
-        if discord.utils.get(ctx.author.roles, name=os.environ["UUID_UNCHECKED_ROLE_NAME"]):
+        if discord.utils.get(ctx.author.roles, id=int(os.environ["UUID_UNCHECKED_ROLE_ID"])):
             uuid = self.bot.mcid_to_uuid(mcid)
             if uuid:
                 cur.execute(f"update  user_data set uuid = ARRAY['{uuid}'] where user_id = {ctx.author.id}")
                 db.commit()
                 await ctx.send(f"{mcid}さんのuuid: {uuid}をシステムに登録しました。")
-                role = discord.utils.get(ctx.guild.roles, name=os.environ["UUID_UNCHECKED_ROLE_NAME"])
+                role = discord.utils.get(ctx.guild.roles, id=int(os.environ["UUID_UNCHECKED_ROLE_ID"]))
                 await ctx.author.remove_roles(role)
                 role = discord.utils.get(ctx.guild.roles, id=int(os.environ["MCID_REPORTED_ROLE_ID"]))  # MCID報告済み
                 await ctx.author.add_roles(role)
