@@ -72,13 +72,7 @@ class KGX(commands.Bot):
                 return
             orig_error = getattr(error, "original", error)
             error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
-            error_message = f'```{error_msg}```'
-            ch = ctx.guild.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
-            d = datetime.now()  # 現在時刻の取得
-            time = d.strftime("%Y/%m/%d %H:%M:%S")
-            embed = Embed(title='Error_log', description=error_message, color=0xf04747)
-            embed.set_footer(text=f'channel:{ctx.channel}\ntime:{time}\nuser:{ctx.author.display_name}')
-            await ch.send(embed=embed)
+            await self.send_error_log(ctx.channel.name, ctx.author.display_name, error_msg)
 
     # これより自作メソッド
     @staticmethod
@@ -422,6 +416,16 @@ class KGX(commands.Bot):
         """特定のメッセージまでのメッセージを削除する"""
         msg = await ctx.channel.fetch_message(msg_id)
         await ctx.channel.purge(limit=None, after=msg)
+
+    async def send_error_log(self, channel_name: str, user_name: str, error_message: str):
+        """エラーメッセージをログチャンネルに送信する関数"""
+        error_message = f"```{error_message}```"
+        ch = self.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
+        d = datetime.now()  # 現在時刻の取得
+        time = d.strftime("%Y/%m/%d %H:%M:%S")
+        embed = Embed(title="Error_log", description=error_message, color=0xf04747)
+        embed.set_footer(text=f"channel:{channel_name}\ntime:{time}\nuser:{user_name}")
+        await ch.send(embed=embed)
 
 
 if __name__ == '__main__':

@@ -234,13 +234,7 @@ class Message(commands.Cog):
                         await message.channel.send("指定したメッセージが見つかりません")
 
         except Exception:
-            error_message = f'```{traceback.format_exc()}```'
-            ch = message.guild.get_channel(int(os.environ["LOG_CHANNEL_ID"]))
-            d = datetime.now()  # 現在時刻の取得
-            time = d.strftime("%Y/%m/%d %H:%M:%S")
-            embed = Embed(title='Error_log', description=error_message, color=0xf04747)
-            embed.set_footer(text=f'channel:{message.channel}\ntime:{time}\nuser:{message.author.display_name}')
-            await ch.send(embed=embed)
+            await self.bot.send_error_log(message.channel.name, message.author.display_name, traceback.format_exc())
 
     @commands.command()
     async def qr(self, ctx, qrcode_context: str):
