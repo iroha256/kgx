@@ -427,6 +427,146 @@ class KGX(commands.Bot):
         embed.set_footer(text=f"channel:{channel_name}\ntime:{time}\nuser:{user_name}")
         await ch.send(embed=embed)
 
+    async def update_auction_or_deal_list(self, category: str) -> None:
+        """開催中オークション・取引一覧を更新する関数
+
+            Args:
+                category (str): 更新するカテゴリ。"auction"か"deal"。
+        """
+
+        if category == "auction":
+            active_list_channel_id = int(os.environ["AUCTION_LIST_CHANNEL_ID"])
+            debug_channel_id = int(os.environ["AUCTION_DEBUG_CHANNEL_ID"])
+            currency_types = [os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_GACHA"],
+                              os.environ["CURRENCY_TYPE_ALL"], os.environ["CURRENCY_TYPE_DARK"]]
+            query = "SELECT DISTINCT auction.ch_id, auction.auction_owner_id, auction.auction_item, " \
+                    "tend.tender_id, auction.unit, tend.tend_price, auction.auction_end_time FROM " \
+                    "(auction JOIN tend ON auction.ch_id = tend.ch_id)"
+        else:   # deal
+            active_list_channel_id = int(os.environ["DEAL_LIST_CHANNEL_ID"])
+            debug_channel_id = int(os.environ["DEAL_DEBUG_CHANNEL_ID"])
+            currency_types = [os.environ["CURRENCY_TYPE_SHIINA"], os.environ["CURRENCY_TYPE_GACHA"],
+                              os.environ["CURRENCY_TYPE_ALL"]]
+            query = "SELECT ch_id, deal_owner_id, deal_item, deal_hope_price, deal_end_time, unit FROM deal"
+
+        # 現在の一覧を削除
+        active_list_channel = self.get_channel(active_list_channel_id)
+        await active_list_channel.purge(limit=100)
+
+        # オークションまたは取引のレコードを取得
+        cur.execute(query)
+        records = cur.fetchall()
+
+        def active_filter(record: tuple) -> bool:
+            """開催中かどうかの真偽値を返す関数
+
+                Args:
+                    record(tuple): auctionかdealテーブルのレコード
+                Return:
+                    bool: 開催中であればTrue、でなければFalse
+            """
+            ch_id, owner_id = record[:2]
+            if ch_id == debug_channel_id:
+                return False  # 取引debug
+            elif owner_id == 0:
+                return False  # 開催していない
+            else:
+                return True
+
+        def order_func(record: tuple) -> tuple:
+            """チャンネル名に対応したタプルを返す
+
+                椎名1 → (0, 1)、椎名2 → (0, 2), ガチャ券1 → (1, 1)など
+
+                Args:
+                    record(tuple): auctionかdealテーブルのレコード
+
+                Returns:
+                    tuple: カテゴリとチャンネル番号に対応したタプル
+            """
+            ch_id = record[0]
+            channel_name = self.get_channel(ch_id).name
+
+            for type_order, type_name in enumerate(currency_types):
+                if type_name in channel_name:
+                    # 該当すればtype_orderを確定させる
+                    break
+            else:
+                type_order = len(currency_types)  # いずれにも該当しなければ他よりも大きい値にする
+
+            ch_num = int(re.search(r"\d+", channel_name).group())
+            return type_order, ch_num  # type_order,ch_numの順に比較される
+
+        # 開催中に絞り、種類ごとに並び替える
+        active_auctions_or_deals = list(filter(active_filter, records))
+        active_auctions_or_deals.sort(key=order_func)
+
+        # 1つも開催していなければ
+        if len(active_auctions_or_deals) == 0:
+            embed = discord.Embed(description=f"{'オークション' if category == 'auction' else '取引'}はまだ一つも行われていません！",
+                                  color=0x59a5e3)
+            await active_list_channel.send(embed=embed)
+            return
+
+        # 出品情報のリストを作成する
+        active_list = []
+        kgx_guild = self.get_guild(int(os.environ["KGX_GUILD_ID"]))
+        for record in active_auctions_or_deals:
+            result_strings = []
+
+            # チャンネルメンション
+            channel_id = record[0]
+            result_strings.append(f"<#{channel_id}>:")
+
+            # 出品者情報
+            organizer_id = record[1]
+            organizer = kgx_guild.get_member(organizer_id) or self.get_user(organizer_id)
+            organizer_display_name = "Deleted User" if organizer is None else organizer.display_name
+            result_strings.append(f"出品者 → {organizer_display_name}")
+
+            # 商品名
+            item_name = record[2]
+            result_strings.append(f"商品名 → {item_name}")
+
+            if category == "auction":
+                # 入札者情報
+                tender_ids = record[3]
+                if tender_ids[-1] == 0:
+                    result_strings.append("入札者はまだいません！")
+                else:
+                    highest_tender = kgx_guild.get_member(tender_ids[-1]) or self.get_user(tender_ids[-1])
+                    highest_tender_display_name = "Deleted User" if highest_tender is None \
+                        else highest_tender.display_name
+                    result_strings.append(f"最高額入札者 → {highest_tender_display_name}")
+
+                    tend_prices = record[5]
+                    unit = record[4]
+                    result_strings.append(f"入札額 → {unit}{self.stack_check_reverse(tend_prices[-1])}")
+            else:
+                # 価格情報
+                hope_price = record[3]
+                unit = record[5]
+                result_strings.append(f"希望価格 → {unit}{self.stack_check_reverse(int(hope_price))}")
+
+            # 終了時刻
+            end_time = record[6] if category == "auction" else record[4]
+            end_time_datetime = datetime.strptime(end_time, "%Y/%m/%d-%H:%M")
+            end_time_unix = int(end_time_datetime.timestamp())
+            result_strings.append(f"終了 → <t:{end_time_unix}:R>")
+
+            active_list.append("\n".join(result_strings))
+
+        # 分割して送信する
+        for description in self.join_within_limit(active_list, sep="\n\n--------\n\n"):
+            embed = discord.Embed(description=description, color=0x59a5e3)
+            await active_list_channel.send(embed=embed)
+
+    async def update_auction_list(self) -> None:
+        await self.update_auction_or_deal_list("auction")
+
+    async def update_deal_list(self) -> None:
+        await self.update_auction_or_deal_list("deal")
+
 
 if __name__ == '__main__':
     bot = KGX(prefix=os.environ["COMMAND_PREFIX"])
