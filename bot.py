@@ -355,7 +355,7 @@ class KGX(commands.Bot):
     @staticmethod
     def is_siina_category(ctx: commands.Context) -> bool:
         """チャンネルが椎名カテゴリに入っているかの真偽値を返す関数"""
-        siina_channel_ids = {siina.id for siina in ctx.guild.text_channels if "椎名" in siina.name}
+        siina_channel_ids = {siina.id for siina in ctx.guild.text_channels if os.environ["CURRENCY_TYPE_SHIINA"] in siina.name}
         return ctx.channel.id in siina_channel_ids
 
     @staticmethod
