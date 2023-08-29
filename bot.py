@@ -406,23 +406,6 @@ class KGX(commands.Bot):
         tuple_string_format = tuple_string.replace("(", "{").replace(")", "}")
         return tuple_string_format
 
-    async def change_message(self, ch_id: int, msg_id: int, **kwargs) -> discord.Message:
-        """メッセージを取得して編集する"""
-        ch = self.get_channel(ch_id)
-        msg = await ch.fetch_message(msg_id)
-        content = kwargs.pop("content", msg.id)
-        embed = kwargs.pop("embed", msg.embeds[0] if msg.embeds else None)
-        if embed is None:
-            return await msg.edit(content=content)
-        else:
-            return await msg.edit(content=content, embed=embed)
-
-    @staticmethod
-    async def delete_to(ctx, msg_id: int) -> None:
-        """特定のメッセージまでのメッセージを削除する"""
-        msg = await ctx.channel.fetch_message(msg_id)
-        await ctx.channel.purge(limit=None, after=msg)
-
 
 if __name__ == '__main__':
     bot = KGX(prefix=os.environ["COMMAND_PREFIX"])
