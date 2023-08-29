@@ -342,24 +342,24 @@ class KGX(commands.Bot):
 
     @staticmethod
     def is_auction_category(ctx: commands.Context) -> bool:
-        """チャンネルがオークションカテゴリに入っているかの真偽値を返す関数"""
+        """チャンネルがオークションカテゴリチャンネルに入っているかの真偽値を返す関数"""
         category_channel = ctx.channel.category
         return category_channel is not None and category_channel.name.startswith(os.environ["AUCTION_CATEGORY_PREFIX"])
 
     @staticmethod
     def is_normal_category(ctx: commands.Context) -> bool:
-        """チャンネルがノーマルカテゴリに入っているかの真偽値を返す関数"""
+        """チャンネルがノーマルカテゴリチャンネルに入っているかの真偽値を返す関数"""
         category_channel = ctx.channel.category
         return category_channel is not None and category_channel.name.startswith(os.environ["DEAL_CATEGORY_PREFIX"])
 
     @staticmethod
     def is_siina_category(ctx: commands.Context) -> bool:
-        """チャンネルが椎名カテゴリに入っているかの真偽値を返す関数"""
+        """チャンネルが椎名カテゴリに入っているか(チャンネル名に「椎名」が含まれているか)の真偽値を返す関数"""
         return os.environ["CURRENCY_TYPE_SHIINA"] in ctx.channel.name
 
     @staticmethod
     def is_gacha_category(ctx: commands.Context) -> bool:
-        """チャンネルがガチャ券カテゴリに入っているかの真偽値を返す関数"""
+        """チャンネルがガチャ券カテゴリに入っているか(チャンネル名に「ガチャ券」が含まれているか)の真偽値を返す関数"""
         return os.environ["CURRENCY_TYPE_GACHA"] in ctx.channel.name
 
     async def dm_send(self, user_id: int, content) -> bool:
@@ -416,7 +416,7 @@ class KGX(commands.Bot):
         await ctx.channel.purge(limit=None, after=msg)
 
     async def send_error_log(self, channel_name: str, user_name: str, error_message: str) -> None:
-        """エラーメッセージをログチャンネルに送信する関数
+        """エラーメッセージをログチャンネルに送信するメソッド
 
             Args:
                 channel_name (str): 実行したチャンネル名
@@ -432,7 +432,7 @@ class KGX(commands.Bot):
         await ch.send(embed=embed)
 
     async def update_auction_or_deal_list(self, category: str) -> None:
-        """開催中オークション・取引一覧を更新する関数
+        """開催中オークション・取引一覧を更新するメソッド
 
             Args:
                 category (str): 更新するカテゴリ。"auction"か"deal"。
