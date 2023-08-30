@@ -3,7 +3,6 @@ import os
 import random
 import re
 import traceback
-from datetime import datetime
 
 import discord
 import psycopg2

@@ -1,7 +1,6 @@
 import asyncio
 import os
 import re
-import traceback
 from datetime import datetime, timedelta
 
 import discord

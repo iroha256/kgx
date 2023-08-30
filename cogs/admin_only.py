@@ -1,8 +1,5 @@
 import asyncio
-import datetime
 import os
-import re
-import traceback
 from traceback import TracebackException
 
 import discord

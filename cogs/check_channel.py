@@ -1,9 +1,7 @@
 import asyncio
-import datetime
 import os
 import traceback
 
-import discord
 import psycopg2
 from discord.ext import commands, tasks
 
