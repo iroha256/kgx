@@ -11,12 +11,12 @@ class MemberJoin(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         if member.bot:
-            role = discord.utils.get(member.guild.roles, name=os.environ["BOT_ROLE_NAME"])
+            role = discord.utils.get(member.guild.roles, id=int(os.environ["BOT_ROLE_ID"]))
             await member.add_roles(role)
             return
 
-        newcomer = discord.utils.get(member.guild.roles, name=os.environ["ROOKIE_ROLE_NAME"])
-        reported = discord.utils.get(member.guild.roles, name=os.environ["MCID_REPORTED_ROLE_NAME"])
+        newcomer = discord.utils.get(member.guild.roles, id=int(os.environ["ROOKIE_ROLE_ID"]))
+        reported = discord.utils.get(member.guild.roles, id=int(os.environ["MCID_REPORTED_ROLE_ID"]))
 
         self.bot.cur.execute("SELECT COUNT(*) FROM user_data WHERE user_id = %s", (member.id,))
         if self.bot.cur.fetchone()[0]:
