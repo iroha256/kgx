@@ -56,6 +56,9 @@ class CheckEndTime(commands.Cog):
                         # chのdbを消し去る。これをもってその人のオークション開催回数を減らしたことになる
                         self.bot.reset_ch_db(ch.id, "a")
                         await ch.send('--------ｷﾘﾄﾘ線--------')
+
+                        await self.bot.update_auction_list()
+
                         await asyncio.sleep(0.3)
                         try:
                             await asyncio.wait_for(ch.edit(name=f"{ch.name}{os.environ['NOT_HELD_SUFFIX']}"), timeout=3.0)
