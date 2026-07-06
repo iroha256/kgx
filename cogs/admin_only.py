@@ -245,6 +245,7 @@ class AdminOnly(commands.Cog):
         await ctx.send(f'{user.display_name}の落札ポイントを{n}にセットしました')
 
         await self.bot.update_bidscore_ranking()
+        await self.bot.update_bidscore_role(user, n)
         channel = self.bot.get_channel(int(os.environ["BID_SCORE_NOTIFICATION_CHANNEL_ID"]))
         embed = discord.Embed(
             description=f"{ctx.author.display_name}により、{user.display_name}"
