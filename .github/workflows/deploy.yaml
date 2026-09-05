@@ -26,10 +26,6 @@ jobs:
               Port ${{ secrets.SSH_PORT }}
               IdentityFile ~/.ssh/id_rsa
               ProxyCommand ./cloudflared access ssh --hostname %h --log-level debug --id ${{ secrets.CF_ACCESS_CLIENT_ID }} --secret ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
-
-      - name: Debugging
-        run: |
-          curl -v ${{ secrets.SSH_HOST_NAME }}
       
       - name: Deploy Over SSH
         env:
