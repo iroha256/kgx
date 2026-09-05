@@ -29,11 +29,7 @@ jobs:
 
       - name: Debugging
         run: |
-          pwd
-          ls -la
-          ./cloudflared --version
-          ssh -G target
-          ssh -vvv target
+          curl -v ${{ secrets.SSH_HOST_NAME }}
       
       - name: Deploy Over SSH
         env:
