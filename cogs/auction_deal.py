@@ -848,7 +848,7 @@ class AuctionDael(commands.Cog):
                 await ctx.send(embed=embed)
                 return
             # オークション主催者じゃなければ警告して終了
-            elif ctx.author.id != owner_id and not self.is_admin(ctx.author):
+            elif ctx.author.id != auction_owner_id and not self.is_admin(ctx.author):
                 embed = discord.Embed(description="このコマンドはオークション主催者、運営、開発者のみ使用可能です。", color=0x4259fb)
                 await ctx.send(embed=embed)
                 return
